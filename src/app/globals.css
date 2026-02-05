@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 30% 99%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --primary: 142 71% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 142 30% 95%;
+    --secondary-foreground: 142 71% 30%;
+    --accent: 48 96% 53%;
+    --accent-foreground: 48 96% 10%;
+    --muted: 60 10% 96%;
+    --muted-foreground: 0 0% 45%;
+    --border: 0 0% 92%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-primary;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-emerald-500 to-primary bg-clip-text text-transparent;
+    background-size: 200% auto;
+  }
+
+  .gradient-text-accent {
+    @apply bg-gradient-to-r from-accent via-yellow-400 to-accent bg-clip-text text-transparent;
+    background-size: 200% auto;
+  }
+
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-black/5 backdrop-blur-xl border border-black/5;
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 60px -15px hsla(142, 71%, 45%, 0.3);
+  }
+
+  .shadow-glow-accent {
+    box-shadow: 0 0 60px -15px hsla(48, 96%, 53%, 0.4);
+  }
+
+  .mask-gradient {
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  @keyframes shake {
+
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+
+    25% {
+      transform: translateX(-5px);
+    }
+
+    75% {
+      transform: translateX(5px);
+    }
+  }
+
+  .animate-shake {
+    animation: shake 0.3s ease-in-out;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient-shift {
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-to));
+  }
+}
