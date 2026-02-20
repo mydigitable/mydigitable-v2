@@ -52,7 +52,9 @@ export default function OrdersHistoryPage() {
             .from("restaurants")
             .select("id")
             .eq("owner_id", user.id)
-            .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .single();
 
         if (restaurant) {
             let query = supabase
@@ -140,8 +142,8 @@ export default function OrdersHistoryPage() {
                             key={range}
                             onClick={() => setDateRange(range)}
                             className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors ${dateRange === range
-                                    ? 'bg-primary text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-primary text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
                             {range === 'today' ? 'Hoy' : range === 'week' ? 'Semana' : range === 'month' ? 'Mes' : 'Todo'}

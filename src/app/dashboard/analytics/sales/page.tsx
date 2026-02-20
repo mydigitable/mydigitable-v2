@@ -39,7 +39,9 @@ export default function SalesAnalyticsPage() {
             .from("restaurants")
             .select("id")
             .eq("owner_id", user.id)
-            .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .single();
 
         if (restaurant) {
             const now = new Date();
@@ -115,8 +117,8 @@ export default function SalesAnalyticsPage() {
                                 key={range}
                                 onClick={() => setDateRange(range)}
                                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${dateRange === range
-                                        ? 'bg-white text-slate-900 shadow'
-                                        : 'text-slate-600 hover:text-slate-900'
+                                    ? 'bg-white text-slate-900 shadow'
+                                    : 'text-slate-600 hover:text-slate-900'
                                     }`}
                             >
                                 {range === 'week' ? '7 días' : range === 'month' ? '30 días' : '12 meses'}

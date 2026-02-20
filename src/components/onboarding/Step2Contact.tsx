@@ -1,116 +1,129 @@
 "use client";
 
-import { Phone, Mail, Instagram, Facebook, AtSign } from "lucide-react";
+import { Phone, Mail, Globe, Instagram, Facebook, Twitter } from "lucide-react";
 
 interface Props {
-    data: any;
-    onUpdate: (data: any) => void;
+    formData: any;
+    updateFormData: (data: any) => void;
+    email: string;
 }
 
-export function Step2Contact({ data, onUpdate }: Props) {
-    const isEmailValid = !data.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
-
+export function Step2Contact({ formData, updateFormData, email }: Props) {
     return (
-        <div className="space-y-6">
-            {/* Email */}
-            <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 flex items-center gap-2">
-                    <Mail size={12} />
-                    Email de contacto *
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-3xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Phone className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-2">
+                    Información de Contacto
+                </h2>
+                <p className="text-slate-500">
+                    ¿Cómo pueden contactarte tus clientes?
+                </p>
+            </div>
+
+            {/* Email (readonly) */}
+            <div className="mb-6">
+                <label className="block text-sm font-black text-slate-900 mb-3">
+                    📧 Email
                 </label>
-                <input
-                    type="email"
-                    value={data.email || ""}
-                    onChange={(e) => onUpdate({ email: e.target.value })}
-                    placeholder="contacto@tunegocio.com"
-                    className={`w-full h-14 px-5 rounded-2xl bg-slate-50 border transition-all outline-none font-bold text-slate-900 ${!isEmailValid ? "border-red-300 bg-red-50" : "border-slate-100 focus:bg-white focus:border-primary"
-                        }`}
-                />
-                {!isEmailValid && (
-                    <p className="text-xs text-red-400 ml-1">Email no válido</p>
-                )}
+                <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <input
+                        type="email"
+                        value={email}
+                        disabled
+                        className="w-full h-14 pl-12 pr-5 rounded-xl bg-slate-50 border-2 border-slate-200 font-medium text-slate-900 cursor-not-allowed"
+                    />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                    Este es tu email de registro
+                </p>
             </div>
 
             {/* Teléfono */}
-            <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 flex items-center gap-2">
-                    <Phone size={12} />
-                    Teléfono *
+            <div className="mb-6">
+                <label className="block text-sm font-black text-slate-900 mb-3">
+                    📞 Teléfono <span className="text-red-500">*</span>
                 </label>
-                <input
-                    type="tel"
-                    value={data.phone || ""}
-                    onChange={(e) => onUpdate({ phone: e.target.value })}
-                    placeholder="+34 612 345 678"
-                    className="w-full h-14 px-5 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-primary transition-all outline-none font-bold text-slate-900"
-                />
-                {!data.phone && (
-                    <p className="text-xs text-red-400 ml-1">El teléfono es obligatorio</p>
+                <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <input
+                        type="tel"
+                        value={formData.phone || ''}
+                        onChange={(e) => updateFormData({ phone: e.target.value })}
+                        placeholder="+34 600 123 456"
+                        className="w-full h-14 pl-12 pr-5 rounded-xl bg-white border-2 border-slate-200 focus:border-primary focus:outline-none font-medium text-slate-900 transition-colors"
+                    />
+                </div>
+                {!formData.phone && (
+                    <p className="text-xs text-red-500 mt-2">El teléfono es obligatorio</p>
                 )}
             </div>
 
-            {/* Redes sociales */}
-            <div className="pt-4 border-t border-slate-100">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
-                    Redes sociales (opcional)
-                </h3>
+            {/* Sitio web */}
+            <div className="mb-6">
+                <label className="block text-sm font-black text-slate-900 mb-3">
+                    🌐 Sitio web <span className="text-slate-400 text-xs font-normal">(opcional)</span>
+                </label>
+                <div className="relative">
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <input
+                        type="url"
+                        value={formData.website || ''}
+                        onChange={(e) => updateFormData({ website: e.target.value })}
+                        placeholder="https://turestaurante.com"
+                        className="w-full h-14 pl-12 pr-5 rounded-xl bg-white border-2 border-slate-200 focus:border-primary focus:outline-none font-medium text-slate-900 transition-colors"
+                    />
+                </div>
+            </div>
 
-                <div className="space-y-4">
+            {/* Redes sociales */}
+            <div>
+                <label className="block text-sm font-black text-slate-900 mb-3">
+                    📱 Redes Sociales <span className="text-slate-400 text-xs font-normal">(opcional)</span>
+                </label>
+                <p className="text-sm text-slate-500 mb-4">
+                    Tus clientes podrán seguirte desde el menú digital
+                </p>
+
+                <div className="space-y-3">
                     {/* Instagram */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white flex-shrink-0">
-                            <Instagram size={22} />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
-                                <span className="px-3 text-slate-400 text-sm">@</span>
-                                <input
-                                    type="text"
-                                    value={data.social_instagram || ""}
-                                    onChange={(e) => onUpdate({ social_instagram: e.target.value })}
-                                    placeholder="tu_restaurante"
-                                    className="flex-1 h-12 pr-4 bg-transparent outline-none font-medium text-slate-900"
-                                />
-                            </div>
-                        </div>
+                    <div className="relative">
+                        <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500" size={20} />
+                        <input
+                            type="text"
+                            value={formData.instagram || ''}
+                            onChange={(e) => updateFormData({ instagram: e.target.value })}
+                            placeholder="@turestaurante"
+                            className="w-full h-12 pl-12 pr-5 rounded-xl bg-white border-2 border-slate-200 focus:border-pink-500 focus:outline-none font-medium text-slate-900 transition-colors"
+                        />
                     </div>
 
                     {/* Facebook */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white flex-shrink-0">
-                            <Facebook size={22} />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
-                                <span className="px-3 text-slate-400 text-sm whitespace-nowrap">facebook.com/</span>
-                                <input
-                                    type="text"
-                                    value={data.social_facebook || ""}
-                                    onChange={(e) => onUpdate({ social_facebook: e.target.value })}
-                                    placeholder="tunegocio"
-                                    className="flex-1 h-12 pr-4 bg-transparent outline-none font-medium text-slate-900"
-                                />
-                            </div>
-                        </div>
+                    <div className="relative">
+                        <Facebook className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600" size={20} />
+                        <input
+                            type="text"
+                            value={formData.facebook || ''}
+                            onChange={(e) => updateFormData({ facebook: e.target.value })}
+                            placeholder="facebook.com/turestaurante"
+                            className="w-full h-12 pl-12 pr-5 rounded-xl bg-white border-2 border-slate-200 focus:border-blue-600 focus:outline-none font-medium text-slate-900 transition-colors"
+                        />
                     </div>
 
-                    {/* TikTok */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white flex-shrink-0">
-                            <AtSign size={22} />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
-                                <span className="px-3 text-slate-400 text-sm whitespace-nowrap">tiktok.com/@</span>
-                                <input
-                                    type="text"
-                                    value={data.social_tiktok || ""}
-                                    onChange={(e) => onUpdate({ social_tiktok: e.target.value })}
-                                    placeholder="tunegocio"
-                                    className="flex-1 h-12 pr-4 bg-transparent outline-none font-medium text-slate-900"
-                                />
-                            </div>
-                        </div>
+                    {/* Twitter/X */}
+                    <div className="relative">
+                        <Twitter className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-500" size={20} />
+                        <input
+                            type="text"
+                            value={formData.twitter || ''}
+                            onChange={(e) => updateFormData({ twitter: e.target.value })}
+                            placeholder="@turestaurante"
+                            className="w-full h-12 pl-12 pr-5 rounded-xl bg-white border-2 border-slate-200 focus:border-sky-500 focus:outline-none font-medium text-slate-900 transition-colors"
+                        />
                     </div>
                 </div>
             </div>

@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
 
         if (accessToken && type === "recovery") {
             // El token ya está en la sesión gracias al cliente de Supabase
-            console.log("Recovery token detected");
+
         }
     }, []);
 

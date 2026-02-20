@@ -1,0 +1,355 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+    Sparkles,
+    Store,
+    MapPin,
+    Check,
+    Loader2,
+    ArrowRight,
+    Rocket
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import type { PlanTier } from '@/types/database';
+
+interface OnboardingConfig {
+    userId: string;
+    email: string;
+    restaurantName: string;
+    country: string;
+    planTier: PlanTier;
+    locations: number;
+    timestamp: string;
+}
+
+export default function OnboardingPage() {
+    const router = useRouter();
+    const supabase = createClient();
+
+    const [config, setConfig] = useState<OnboardingConfig | null>(null);
+    const [step, setStep] = useState<'loading' | 'welcome' | 'creating' | 'error'>('loading');
+    const [error, setError] = useState<string>('');
+    const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        loadConfig();
+    }, []);
+
+    const loadConfig = () => {
+        try {
+            const stored = localStorage.getItem('onboardingConfig');
+            if (!stored) {
+                setError('No se encontró la configuración de registro. Por favor, regístrate nuevamente.');
+                setStep('error');
+                return;
+            }
+
+            const parsed = JSON.parse(stored) as OnboardingConfig;
+            console.log('📋 Config loaded:', parsed);
+            setConfig(parsed);
+            setStep('welcome');
+        } catch (err) {
+            console.error('Error loading config:', err);
+            setError('Error al cargar la configuración.');
+            setStep('error');
+        }
+    };
+
+    const createRestaurant = async () => {
+        if (!config) return;
+
+        setStep('creating');
+        setProgress(0);
+
+        try {
+            // Paso 1: Generar slug único
+            setProgress(25);
+            console.log('🔧 Generating slug...');
+
+            const baseSlug = config.restaurantName
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "");
+
+            let finalSlug = baseSlug;
+            let attempts = 0;
+            const maxAttempts = 5;
+
+            while (attempts < maxAttempts) {
+                const { data: existingSlug } = await supabase
+                    .from("restaurants")
+                    .select("id")
+                    .eq("slug", finalSlug)
+                    .limit(1);
+
+                if (!existingSlug || existingSlug.length === 0) {
+                    break;
+                }
+
+                finalSlug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+                attempts++;
+            }
+
+            console.log('✅ Slug generated:', finalSlug);
+
+            // Paso 2: Crear restaurant
+            setProgress(50);
+            console.log('🏪 Creating restaurant...');
+
+            // Mapear nombre de país a código ISO de 2 letras
+            const countryCodeMap: Record<string, string> = {
+                'España': 'ES',
+                'México': 'MX',
+                'Argentina': 'AR',
+                'Colombia': 'CO',
+                'Chile': 'CL',
+                'Perú': 'PE',
+                'Venezuela': 'VE',
+                'Ecuador': 'EC',
+                'Guatemala': 'GT',
+                'Cuba': 'CU',
+                'Bolivia': 'BO',
+                'República Dominicana': 'DO',
+                'Honduras': 'HN',
+                'Paraguay': 'PY',
+                'El Salvador': 'SV',
+                'Nicaragua': 'NI',
+                'Costa Rica': 'CR',
+                'Panamá': 'PA',
+                'Uruguay': 'UY',
+                'Puerto Rico': 'PR',
+                'Estados Unidos': 'US',
+                'Francia': 'FR',
+                'Italia': 'IT',
+                'Portugal': 'PT',
+                'Reino Unido': 'GB',
+                'Alemania': 'DE',
+                'Países Bajos': 'NL',
+                'Bélgica': 'BE',
+                'Suiza': 'CH',
+                'Austria': 'AT',
+                'Brasil': 'BR',
+            };
+
+            const countryCode = countryCodeMap[config.country] || 'ES'; // Default a ES si no se encuentra
+            console.log(`Country: ${config.country} → Code: ${countryCode}`);
+
+            const { data: restaurant, error: restaurantError } = await supabase
+                .from("restaurants")
+                .insert({
+                    owner_id: config.userId,
+                    name: config.restaurantName,
+                    slug: finalSlug,
+                    plan_tier: config.planTier,
+                    country: countryCode, // Usar código ISO de 2 letras
+                    email: config.email,
+                    total_locations: config.locations, // Número de sucursales del plan
+                    is_active: true,
+                    onboarding_completed: false,
+                })
+                .select()
+                .single();
+
+            if (restaurantError) {
+                throw new Error(`Error creating restaurant: ${restaurantError.message}`);
+            }
+
+            console.log('✅ Restaurant created:', restaurant);
+
+            // Paso 3: Marcar onboarding como completado
+            setProgress(90);
+            console.log('✅ Marking onboarding as completed...');
+
+            const { error: updateError } = await supabase
+                .from("restaurants")
+                .update({ onboarding_completed: true })
+                .eq("id", restaurant.id);
+
+            if (updateError) {
+                console.error('Warning: Could not mark onboarding as completed:', updateError);
+            }
+
+            // Paso 4: Limpiar localStorage y redirigir
+            setProgress(100);
+            console.log('🎉 Onboarding completed!');
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            localStorage.removeItem('onboardingConfig');
+            router.push('/dashboard');
+
+        } catch (err: any) {
+            console.error('❌ Error in onboarding:', err);
+            setError(err.message || 'Error al crear tu restaurante');
+            setStep('error');
+        }
+    };
+
+    if (step === 'loading') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            </div>
+        );
+    }
+
+    if (step === 'error') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
+                <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 text-center">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
+                        <span className="text-4xl">❌</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 mb-3">Error</h2>
+                    <p className="text-slate-600 mb-6">{error}</p>
+                    <button
+                        onClick={() => router.push('/register')}
+                        className="w-full h-12 bg-primary text-white rounded-xl font-bold hover:scale-105 transition-transform"
+                    >
+                        Volver al registro
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (step === 'creating') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
+                <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10">
+                    <div className="text-center mb-8">
+                        <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-primary to-emerald-600 rounded-full flex items-center justify-center animate-pulse">
+                            <Rocket className="w-10 h-10 text-white" />
+                        </div>
+                        <h2 className="text-3xl font-black text-slate-900 mb-2">
+                            Creando tu restaurante...
+                        </h2>
+                        <p className="text-slate-600">
+                            Estamos configurando todo para ti
+                        </p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-3">
+                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full bg-gradient-to-r from-primary to-emerald-500"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                                transition={{ duration: 0.5 }}
+                            />
+                        </div>
+                        <p className="text-center text-sm font-bold text-slate-600">
+                            {progress}%
+                        </p>
+                    </div>
+
+                    {/* Steps */}
+                    <div className="mt-8 space-y-3">
+                        <div className={`flex items-center gap-3 ${progress >= 25 ? 'text-primary' : 'text-slate-300'}`}>
+                            {progress >= 25 ? <Check size={20} /> : <div className="w-5 h-5 border-2 border-current rounded-full" />}
+                            <span className="text-sm font-medium">Generando identificador único</span>
+                        </div>
+                        <div className={`flex items-center gap-3 ${progress >= 50 ? 'text-primary' : 'text-slate-300'}`}>
+                            {progress >= 50 ? <Check size={20} /> : <div className="w-5 h-5 border-2 border-current rounded-full" />}
+                            <span className="text-sm font-medium">Creando tu restaurante</span>
+                        </div>
+                        <div className={`flex items-center gap-3 ${progress >= 90 ? 'text-primary' : 'text-slate-300'}`}>
+                            {progress >= 90 ? <Check size={20} /> : <div className="w-5 h-5 border-2 border-current rounded-full" />}
+                            <span className="text-sm font-medium">Configurando plan y sucursales</span>
+                        </div>
+                        <div className={`flex items-center gap-3 ${progress >= 100 ? 'text-primary' : 'text-slate-300'}`}>
+                            {progress >= 100 ? <Check size={20} /> : <div className="w-5 h-5 border-2 border-current rounded-full" />}
+                            <span className="text-sm font-medium">Finalizando configuración</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Welcome screen
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--primary)_1.2px,_transparent_1.2px)] [background-size:60px_60px] opacity-10" />
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10"
+            >
+                {/* Header */}
+                <div className="bg-gradient-to-r from-primary to-emerald-600 p-10 text-center">
+                    <div className="w-24 h-24 mx-auto mb-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <Sparkles className="w-12 h-12 text-white" />
+                    </div>
+                    <h1 className="text-4xl font-black text-white mb-3">
+                        ¡Bienvenido a MyDigitable!
+                    </h1>
+                    <p className="text-white/90 text-lg">
+                        Estás a un paso de digitalizar tu negocio
+                    </p>
+                </div>
+
+                {/* Content */}
+                <div className="p-10">
+                    <div className="space-y-6 mb-8">
+                        {/* Restaurant Info */}
+                        <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl">
+                            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Store className="w-6 h-6 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-black text-slate-900 mb-1">Tu restaurante</h3>
+                                <p className="text-2xl font-black text-primary">{config?.restaurantName}</p>
+                            </div>
+                        </div>
+
+                        {/* Plan Info */}
+                        <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl">
+                            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Sparkles className="w-6 h-6 text-emerald-600" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-black text-slate-900 mb-1">Plan seleccionado</h3>
+                                <p className="text-2xl font-black text-emerald-600 capitalize">{config?.planTier}</p>
+                                <p className="text-sm text-slate-600 mt-1">
+                                    {config?.locations} {config?.locations === 1 ? 'sucursal' : 'sucursales'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Location Info */}
+                        <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl">
+                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <MapPin className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-black text-slate-900 mb-1">Ubicación</h3>
+                                <p className="text-lg font-bold text-slate-700">{config?.country}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA */}
+                    <button
+                        onClick={createRestaurant}
+                        className="w-full h-16 bg-gradient-to-r from-primary to-emerald-600 text-white rounded-2xl font-black text-lg uppercase tracking-wider shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group"
+                    >
+                        Crear mi restaurante
+                        <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+
+                    <p className="text-center text-sm text-slate-500 mt-4">
+                        Esto solo tomará unos segundos
+                    </p>
+                </div>
+            </motion.div>
+        </div>
+    );
+}

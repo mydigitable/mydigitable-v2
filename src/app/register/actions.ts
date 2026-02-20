@@ -11,22 +11,6 @@ export async function registerAction(formData: FormData) {
     const country = formData.get("country") as string;
     const planFromForm = formData.get("plan") as string;
 
-    console.log("=== REGISTER ACTION ===");
-    console.log("Plan recibido:", planFromForm);
-
-    // SOLO estos valores son válidos en la DB
-    let dbPlan: 'basic' | 'pro' | 'enterprise' = 'basic';
-
-    if (planFromForm === 'pro') {
-        dbPlan = 'pro';
-    } else if (planFromForm === 'enterprise') {
-        dbPlan = 'enterprise';
-    } else {
-        dbPlan = 'basic'; // Por defecto
-    }
-
-    console.log("Plan a guardar:", dbPlan);
-
     try {
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
@@ -35,6 +19,7 @@ export async function registerAction(formData: FormData) {
                 data: {
                     restaurant_name: restaurantName,
                     country: country,
+                    plan: planFromForm,
                 },
             }
         });
@@ -50,40 +35,13 @@ export async function registerAction(formData: FormData) {
             return { error: "No se pudo crear el usuario." };
         }
 
-        const slug = restaurantName
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, "");
+        return {
+            success: true,
+            userId: authData.user.id
+        };
 
-        const finalSlug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-        const { error: dbError } = await supabase.from("restaurants").insert({
-            owner_id: authData.user.id,
-            name: restaurantName,
-            slug: finalSlug,
-            subscription_plan: dbPlan,
-            is_active: true,
-            is_accepting_orders: true,
-            address: country,
-            email: email,
-            onboarding_completed: false,
-            onboarding_step: 1,
-        });
-
-        if (dbError) {
-            console.error("DB Error:", dbError);
-            return { error: `Error creando restaurante: ${dbError.message}` };
-        }
-
-        // Auto login
-        await supabase.auth.signInWithPassword({ email, password });
-
-        return { success: true, redirectTo: '/onboarding' };
-
-    } catch (err: any) {
-        console.error("Error:", err);
-        return { error: "Error inesperado." };
+    } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Error inesperado'
+        return { error: "Error inesperado: " + msg };
     }
 }

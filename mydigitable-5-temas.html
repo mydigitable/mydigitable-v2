@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyDigitable – 5 Temas de Menú</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Outfit:wght@300;400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================
+   SWITCHER / WRAPPER UI
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #18181B;
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  padding: 32px 20px 60px;
+}
+
+.page-title {
+  text-align: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0.5;
+}
+.page-subtitle {
+  text-align: center;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  letter-spacing: -0.02em;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+.tab-btn {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+.tab-btn.active {
+  background: white;
+  border-color: white;
+  color: #18181B;
+  font-weight: 700;
+}
+
+/* THEME WRAPPER */
+.theme-pane { display: none; }
+.theme-pane.active { display: flex; justify-content: center; }
+
+.theme-info {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.theme-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.theme-name {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 4px;
+}
+.theme-desc {
+  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+}
+
+/* PHONE SHELL */
+.phone-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phone {
+  width: 390px;
+  min-height: 844px;
+  border-radius: 44px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* ============================================
+   TEMA 1: MODERN MINIMAL
+   ============================================ */
+.t1 {
+  --p: #16A34A;
+  --p-text: #fff;
+  --bg: #FAFAF9;
+  --surface: #FFFFFF;
+  --border: #E7E5E4;
+  --tx: #1C1917;
+  --tx2: #78716C;
+  --tx3: #A8A29E;
+  --r: 12px;
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+}
+.t1 .status-bar { background: var(--surface); padding: 14px 28px 8px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--tx); }
+.t1 .header { background: var(--surface); padding: 4px 20px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.t1 .header-left { display: flex; align-items: center; gap: 10px; }
+.t1 .hamburger { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+.t1 .hamburger span { width: 20px; height: 2px; background: var(--tx); border-radius: 2px; }
+.t1 .brand { font-size: 17px; font-weight: 700; color: var(--tx); letter-spacing: -0.3px; }
+.t1 .cart-btn { width: 38px; height: 38px; background: var(--p); border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+.t1 .cart-btn svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 1.8; }
+.t1 .cart-badge { position: absolute; top: -4px; right: -4px; background: #EF4444; color: white; font-size: 9px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg); }
+.t1 .search-wrap { padding: 14px 20px 10px; background: var(--surface); }
+.t1 .search-box { background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+.t1 .search-box svg { width: 16px; height: 16px; stroke: var(--tx3); fill: none; stroke-width: 2; flex-shrink: 0; }
+.t1 .search-box span { font-size: 14px; color: var(--tx3); font-family: 'DM Sans', sans-serif; }
+.t1 .cats { background: var(--surface); padding: 0 20px 14px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.t1 .cats::-webkit-scrollbar { display: none; }
+.t1 .cat-pill { padding: 7px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; white-space: nowrap; border: 1.5px solid var(--border); color: var(--tx2); background: transparent; font-family: 'DM Sans', sans-serif; cursor: pointer; }
+.t1 .cat-pill.active { background: var(--p); border-color: var(--p); color: white; font-weight: 600; }
+.t1 .scroll-area { flex: 1; overflow-y: auto; padding: 16px 20px 100px; scrollbar-width: none; }
+.t1 .scroll-area::-webkit-scrollbar { display: none; }
+.t1 .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); margin-bottom: 12px; margin-top: 4px; }
+.t1 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.t1 .card { background: var(--surface); border-radius: var(--r); overflow: hidden; border: 1px solid var(--border); cursor: pointer; }
+.t1 .card-img { width: 100%; aspect-ratio: 4/3; background: linear-gradient(135deg, #E7E5E4, #D6D3D1); display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; }
+.t1 .badge { position: absolute; top: 8px; left: 8px; background: var(--p); color: white; font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 4px; font-family: 'DM Sans', sans-serif; }
+.t1 .card-body { padding: 10px; }
+.t1 .card-name { font-size: 13px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
+.t1 .card-desc { font-size: 11px; color: var(--tx3); margin-bottom: 8px; line-height: 1.4; }
+.t1 .card-footer { display: flex; align-items: center; justify-content: space-between; }
+.t1 .price { font-size: 15px; font-weight: 700; color: var(--p); font-family: 'DM Sans', sans-serif; }
+.t1 .add { width: 28px; height: 28px; background: var(--p); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.t1 .add svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2.5; }
+.t1 .list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.t1 .list-card { background: var(--surface); border-radius: var(--r); border: 1px solid var(--border); padding: 12px; display: flex; gap: 12px; align-items: center; }
+.t1 .list-img { width: 64px; height: 64px; border-radius: 8px; background: linear-gradient(135deg, #E7E5E4, #D6D3D1); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+.t1 .list-info { flex: 1; }
+.t1 .list-name { font-size: 14px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
+.t1 .list-desc { font-size: 12px; color: var(--tx3); margin-bottom: 6px; line-height: 1.4; }
+.t1 .list-footer { display: flex; align-items: center; justify-content: space-between; }
+.t1 .fab { position: absolute; bottom: 24px; left: 20px; right: 20px; background: var(--p); border-radius: 999px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 24px rgba(22,163,74,0.4); cursor: pointer; }
+.t1 .fab-left { display: flex; align-items: center; gap: 10px; }
+.t1 .fab-count { background: rgba(255,255,255,0.25); color: white; font-size: 12px; font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.t1 .fab-label { color: white; font-size: 14px; font-weight: 600; }
+.t1 .fab-total { color: white; font-size: 15px; font-weight: 700; }
+.t1 .powered { background: var(--surface); text-align: center; padding: 6px; font-size: 10px; color: var(--tx3); border-top: 1px solid var(--border); }
+.t1 .powered span { color: var(--p); font-weight: 600; }
+
+/* ============================================
+   TEMA 2: CLASSIC BISTRO
+   ============================================ */
+.t2 {
+  --navy: #1E3A5F;
+  --gold: #C9A84C;
+  --gl: #F5EDD8;
+  --bg: #FAF8F2;
+  --surface: #FFFFFF;
+  --border: #E2D9C5;
+  --tx: #1A1408;
+  --tx2: #6B5E45;
+  --tx3: #A89880;
+  background: var(--bg);
+  font-family: 'Lato', sans-serif;
+}
+.t2 .status-bar { background: var(--navy); padding: 14px 28px 8px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85); font-family: 'Lato', sans-serif; }
+.t2 .hero-header { background: var(--navy); padding: 16px 24px 22px; position: relative; overflow: hidden; }
+.t2 .hero-header::before { content: ''; position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; border-radius: 50%; background: rgba(201,168,76,0.1); }
+.t2 .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.t2 .hamburger { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+.t2 .hamburger span { width: 20px; height: 2px; background: rgba(255,255,255,0.6); border-radius: 2px; }
+.t2 .brand-c { text-align: center; }
+.t2 .brand-name { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: white; letter-spacing: 0.04em; }
+.t2 .brand-dots { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 2px; }
+.t2 .brand-dots span { color: var(--gold); font-size: 7px; }
+.t2 .cart-icon { width: 34px; height: 34px; border: 1.5px solid rgba(201,168,76,0.4); border-radius: 7px; display: flex; align-items: center; justify-content: center; position: relative; }
+.t2 .cart-icon svg { width: 15px; height: 15px; stroke: white; fill: none; stroke-width: 1.5; }
+.t2 .cart-badge { position: absolute; top: -5px; right: -5px; background: var(--gold); color: var(--navy); font-size: 8px; font-weight: 700; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.t2 .rest-info { text-align: center; }
+.t2 .rest-name { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: white; letter-spacing: -0.01em; line-height: 1.1; }
+.t2 .rest-sub { font-size: 11px; color: rgba(201,168,76,0.85); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
+.t2 .gold-line { height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin-top: 14px; }
+.t2 .nav-tabs { background: var(--bg); padding: 0 20px; display: flex; gap: 0; border-bottom: 2px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.t2 .nav-tabs::-webkit-scrollbar { display: none; }
+.t2 .tab { padding: 12px 13px; font-family: 'Lato', sans-serif; font-size: 11px; font-weight: 700; color: var(--tx3); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.t2 .tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+.t2 .scroll-area { flex: 1; overflow-y: auto; padding: 18px 20px 100px; scrollbar-width: none; }
+.t2 .scroll-area::-webkit-scrollbar { display: none; }
+.t2 .featured { background: var(--navy); border-radius: 4px; overflow: hidden; margin-bottom: 18px; }
+.t2 .feat-img { width: 100%; height: 130px; background: linear-gradient(135deg, #2A4D7A, #1E3A5F); display: flex; align-items: center; justify-content: center; font-size: 64px; position: relative; }
+.t2 .feat-body { padding: 12px 14px; }
+.t2 .feat-lbl { font-size: 9px; font-weight: 700; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 3px; }
+.t2 .feat-name { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: white; margin-bottom: 8px; }
+.t2 .feat-foot { display: flex; align-items: center; justify-content: space-between; }
+.t2 .feat-price { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--gold); font-weight: 600; }
+.t2 .feat-add { background: var(--gold); color: var(--navy); padding: 6px 14px; border-radius: 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.t2 .section-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 4px; }
+.t2 .s-line { flex: 1; height: 1px; background: var(--border); }
+.t2 .s-title { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 600; color: var(--tx2); font-style: italic; white-space: nowrap; }
+.t2 .pcard { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 14px; display: flex; gap: 12px; margin-bottom: 8px; cursor: pointer; }
+.t2 .pimg { width: 68px; height: 68px; border-radius: 3px; background: var(--gl); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+.t2 .pinfo { flex: 1; }
+.t2 .pname { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 600; color: var(--tx); margin-bottom: 3px; }
+.t2 .pdesc { font-size: 12px; color: var(--tx3); line-height: 1.5; margin-bottom: 8px; }
+.t2 .pfoot { display: flex; align-items: center; justify-content: space-between; }
+.t2 .price { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--navy); }
+.t2 .add-btn { background: var(--navy); color: white; padding: 5px 12px; border-radius: 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: 'Lato', sans-serif; }
+.t2 .fab { position: absolute; bottom: 24px; left: 20px; right: 20px; background: var(--navy); border-radius: 3px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(30,58,95,0.35); cursor: pointer; }
+.t2 .fab-count { background: var(--gold); color: var(--navy); font-size: 11px; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.t2 .fab-label { color: white; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-left: 10px; }
+.t2 .fab-total { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 16px; font-weight: 600; }
+.t2 .powered { background: var(--navy); text-align: center; padding: 6px; font-size: 10px; color: rgba(201,168,76,0.5); letter-spacing: 0.04em; }
+.t2 .powered span { color: var(--gold); }
+
+/* ============================================
+   TEMA 3: CRAFT & BOLD
+   ============================================ */
+.t3 {
+  --cop: #C2783A;
+  --cop-l: #D4956A;
+  --bg: #1A1815;
+  --surf: #252220;
+  --surf2: #2E2B27;
+  --brd: #3A3630;
+  --tx: #F5F0E8;
+  --tx2: #B0A898;
+  --tx3: #6B6358;
+  background: var(--bg);
+  font-family: 'Barlow', sans-serif;
+}
+.t3 .status-bar { background: var(--bg); padding: 14px 28px 8px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--tx2); }
+.t3 .header { background: var(--surf2); padding: 10px 20px 14px; border-bottom: 1px solid var(--brd); position: relative; }
+.t3 .header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cop), transparent); }
+.t3 .h-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.t3 .hamburger { display: flex; flex-direction: column; gap: 4px; }
+.t3 .hamburger span { width: 20px; height: 2px; background: var(--tx2); border-radius: 1px; }
+.t3 .brand { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.1em; color: var(--tx); }
+.t3 .cart-btn { width: 36px; height: 36px; border: 1.5px solid var(--cop); border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; }
+.t3 .cart-btn svg { width: 15px; height: 15px; stroke: var(--cop); fill: none; stroke-width: 1.5; }
+.t3 .cart-badge { position: absolute; top: -6px; right: -6px; background: var(--cop); color: white; font-size: 8px; font-weight: 700; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.t3 .rest-name { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 0.05em; color: var(--tx); line-height: 1; margin-bottom: 2px; }
+.t3 .rest-sub { font-size: 11px; font-weight: 500; color: var(--cop); letter-spacing: 0.14em; text-transform: uppercase; }
+.t3 .cats { padding: 12px 20px; background: var(--surf); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--brd); }
+.t3 .cats::-webkit-scrollbar { display: none; }
+.t3 .cat { padding: 6px 14px; background: transparent; border: 1.5px solid var(--brd); border-radius: 2px; font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 0.08em; color: var(--tx2); white-space: nowrap; cursor: pointer; }
+.t3 .cat.active { background: var(--cop); border-color: var(--cop); color: white; }
+.t3 .scroll-area { flex: 1; overflow-y: auto; padding: 16px 20px 100px; scrollbar-width: none; }
+.t3 .scroll-area::-webkit-scrollbar { display: none; }
+.t3 .sec-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.1em; color: var(--cop); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.t3 .sec-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--brd), transparent); }
+.t3 .feat { background: var(--surf2); border: 1px solid var(--brd); border-radius: 4px; overflow: hidden; margin-bottom: 14px; cursor: pointer; }
+.t3 .feat-img { width: 100%; height: 150px; background: linear-gradient(135deg, #2A2520, #1A1510); display: flex; align-items: center; justify-content: center; font-size: 70px; position: relative; }
+.t3 .feat-tag { position: absolute; top: 10px; left: 10px; background: var(--cop); font-family: 'Bebas Neue', sans-serif; font-size: 12px; letter-spacing: 0.1em; color: white; padding: 4px 10px; }
+.t3 .feat-body { padding: 12px 14px; }
+.t3 .feat-name { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 0.05em; color: var(--tx); margin-bottom: 4px; }
+.t3 .feat-desc { font-size: 12px; color: var(--tx2); margin-bottom: 10px; line-height: 1.5; }
+.t3 .feat-foot { display: flex; align-items: center; justify-content: space-between; }
+.t3 .feat-price { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--cop); letter-spacing: 0.05em; }
+.t3 .feat-btn { background: var(--cop); font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 0.1em; color: white; padding: 7px 18px; border-radius: 2px; cursor: pointer; }
+.t3 .prow { display: flex; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--brd); gap: 12px; cursor: pointer; }
+.t3 .prow:last-child { border-bottom: none; }
+.t3 .pnum { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--brd); width: 32px; flex-shrink: 0; text-align: center; }
+.t3 .pimg { width: 56px; height: 56px; border-radius: 3px; background: var(--surf2); border: 1px solid var(--brd); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.t3 .pinfo { flex: 1; }
+.t3 .pname { font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 0.05em; color: var(--tx); margin-bottom: 2px; }
+.t3 .pdesc { font-size: 11px; color: var(--tx2); line-height: 1.4; }
+.t3 .pright { text-align: right; }
+.t3 .price { font-family: 'Bebas Neue', sans-serif; font-size: 19px; color: var(--cop); display: block; margin-bottom: 5px; }
+.t3 .add { width: 26px; height: 26px; border: 1.5px solid var(--cop); border-radius: 2px; display: flex; align-items: center; justify-content: center; margin-left: auto; color: var(--cop); font-size: 16px; line-height: 1; cursor: pointer; }
+.t3 .fab { position: absolute; bottom: 24px; left: 20px; right: 20px; background: linear-gradient(135deg, var(--cop), var(--cop-l)); border-radius: 4px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(194,120,58,0.4); cursor: pointer; }
+.t3 .fab-count { background: rgba(0,0,0,0.25); color: white; font-family: 'Bebas Neue', sans-serif; font-size: 15px; width: 26px; height: 26px; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+.t3 .fab-label { font-family: 'Bebas Neue', sans-serif; color: white; font-size: 17px; letter-spacing: 0.08em; margin-left: 10px; }
+.t3 .fab-total { font-family: 'Bebas Neue', sans-serif; color: white; font-size: 20px; letter-spacing: 0.05em; }
+.t3 .powered { background: var(--bg); text-align: center; padding: 6px; font-size: 10px; color: var(--tx3); border-top: 1px solid var(--brd); }
+.t3 .powered span { color: var(--cop); font-weight: 600; }
+
+/* ============================================
+   TEMA 4: NORDIC CLEAN
+   ============================================ */
+.t4 {
+  background: #FFFFFF;
+  font-family: 'Outfit', sans-serif;
+}
+.t4 .status-bar { background: white; padding: 14px 28px 8px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: #262626; font-family: 'Outfit', sans-serif; }
+.t4 .header { background: white; padding: 10px 20px 14px; border-bottom: 1px solid #E5E5E5; }
+.t4 .h-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.t4 .hamburger { display: flex; flex-direction: column; gap: 5px; }
+.t4 .hamburger span { width: 22px; height: 1.5px; background: #171717; }
+.t4 .h-icons { display: flex; gap: 14px; align-items: center; }
+.t4 .h-icon { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; position: relative; }
+.t4 .h-icon svg { width: 18px; height: 18px; stroke: #171717; fill: none; stroke-width: 1.5; }
+.t4 .dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: #171717; border-radius: 50%; border: 1.5px solid white; }
+.t4 .brand-area { text-align: center; }
+.t4 .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+.t4 .brand-line { flex: 1; height: 1px; background: #E5E5E5; }
+.t4 .brand-txt { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 300; letter-spacing: 0.22em; text-transform: uppercase; color: #A3A3A3; }
+.t4 .rest-name { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: #171717; letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
+.t4 .rest-sub { font-size: 11px; font-weight: 300; color: #737373; letter-spacing: 0.06em; }
+.t4 .nav { background: white; padding: 0 20px; display: flex; gap: 22px; border-bottom: 1px solid #E5E5E5; overflow-x: auto; scrollbar-width: none; }
+.t4 .nav::-webkit-scrollbar { display: none; }
+.t4 .nav-item { padding: 11px 0; font-size: 11px; font-weight: 400; color: #A3A3A3; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -1px; }
+.t4 .nav-item.active { color: #171717; border-bottom-color: #171717; }
+.t4 .scroll-area { flex: 1; overflow-y: auto; scrollbar-width: none; }
+.t4 .scroll-area::-webkit-scrollbar { display: none; }
+.t4 .hero { cursor: pointer; }
+.t4 .hero-img { width: 100%; height: 200px; background: #F5F5F5; display: flex; align-items: center; justify-content: center; font-size: 80px; }
+.t4 .hero-cap { padding: 14px 20px 18px; border-bottom: 1px solid #E5E5E5; display: flex; align-items: flex-start; justify-content: space-between; }
+.t4 .hero-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: #171717; letter-spacing: -0.01em; margin-bottom: 3px; }
+.t4 .hero-desc { font-size: 12px; font-weight: 300; color: #737373; line-height: 1.5; }
+.t4 .hero-price { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: #171717; flex-shrink: 0; margin-left: 14px; }
+.t4 .sec-lbl { padding: 18px 20px 10px; font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: #A3A3A3; }
+.t4 .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #E5E5E5; }
+.t4 .gi { background: white; cursor: pointer; }
+.t4 .gi-img { width: 100%; aspect-ratio: 1; background: #F5F5F5; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+.t4 .gi-cap { padding: 9px 11px 12px; }
+.t4 .gi-name { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 400; color: #171717; margin-bottom: 2px; }
+.t4 .gi-desc { font-size: 10px; font-weight: 300; color: #737373; margin-bottom: 6px; }
+.t4 .gi-foot { display: flex; align-items: center; justify-content: space-between; }
+.t4 .price { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 400; color: #171717; }
+.t4 .add-circle { width: 22px; height: 22px; border: 1.5px solid #171717; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: #171717; line-height: 1; }
+.t4 .list-sec { padding: 0 20px 16px; }
+.t4 .lrow { padding: 14px 0; border-bottom: 1px solid #E5E5E5; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.t4 .lrow:last-child { border-bottom: none; }
+.t4 .lname { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; color: #171717; margin-bottom: 2px; }
+.t4 .ldesc { font-size: 11px; font-weight: 300; color: #737373; line-height: 1.4; }
+.t4 .lright { text-align: right; flex-shrink: 0; }
+.t4 .lprice { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; color: #171717; display: block; margin-bottom: 6px; }
+.t4 .fab { position: absolute; bottom: 24px; left: 20px; right: 20px; background: #171717; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(0,0,0,0.25); cursor: pointer; }
+.t4 .fab-count { border: 1px solid rgba(255,255,255,0.25); color: white; font-size: 12px; font-weight: 300; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.t4 .fab-label { color: white; font-size: 12px; font-weight: 300; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 10px; }
+.t4 .fab-total { font-family: 'Cormorant Garamond', serif; color: white; font-size: 17px; font-weight: 300; }
+.t4 .powered { background: white; text-align: center; padding: 6px; font-size: 10px; color: #A3A3A3; border-top: 1px solid #E5E5E5; font-weight: 300; }
+.t4 .powered span { color: #171717; font-weight: 500; }
+
+/* ============================================
+   TEMA 5: WARM RUSTIC
+   ============================================ */
+.t5 {
+  --terra: #B45309;
+  --terra-l: #FEF3C7;
+  --bg: #FEF7EC;
+  --paper: #FFFDF7;
+  --brd: #E7D9C1;
+  --brd2: #D6C4A0;
+  --tx: #3D1F00;
+  --tx2: #7C4D14;
+  --tx3: #B08040;
+  background: var(--bg);
+  font-family: 'Source Sans 3', sans-serif;
+}
+.t5 .status-bar { background: var(--bg); padding: 14px 28px 8px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--tx2); }
+.t5 .header { background: var(--bg); padding: 8px 20px 14px; border-bottom: 2px solid var(--brd); }
+.t5 .ornament { text-align: center; color: var(--brd2); font-size: 12px; letter-spacing: 0.14em; margin-bottom: 8px; }
+.t5 .h-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.t5 .hamburger { display: flex; flex-direction: column; gap: 4px; }
+.t5 .hamburger span { width: 20px; height: 2px; background: var(--tx2); border-radius: 1px; }
+.t5 .brand-c { text-align: center; flex: 1; padding: 0 10px; }
+.t5 .brand-top { font-size: 8px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--tx3); margin-bottom: 1px; }
+.t5 .brand-name { font-size: 9px; font-weight: 400; letter-spacing: 0.18em; color: var(--tx3); text-transform: uppercase; font-family: 'Libre Baskerville', serif; }
+.t5 .cart-a { position: relative; cursor: pointer; }
+.t5 .cart-a svg { width: 20px; height: 20px; stroke: var(--terra); fill: none; stroke-width: 1.5; }
+.t5 .cart-badge { position: absolute; top: -6px; right: -6px; background: var(--terra); color: white; font-size: 8px; font-weight: 700; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.t5 .rest-area { text-align: center; }
+.t5 .rest-name { font-family: 'Libre Baskerville', serif; font-size: 30px; font-weight: 700; color: var(--tx); line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 3px; }
+.t5 .rest-sub { font-family: 'Libre Baskerville', serif; font-size: 12px; font-weight: 400; color: var(--tx2); font-style: italic; }
+.t5 .div-orn { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.t5 .div-line { flex: 1; height: 1px; background: var(--brd2); }
+.t5 .div-sym { color: var(--terra); font-size: 13px; line-height: 1; }
+.t5 .cats { padding: 12px 20px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; background: var(--bg); border-bottom: 1px solid var(--brd); }
+.t5 .cats::-webkit-scrollbar { display: none; }
+.t5 .cat { padding: 6px 14px; border-radius: 3px; font-family: 'Libre Baskerville', serif; font-size: 12px; font-weight: 400; font-style: italic; color: var(--tx2); white-space: nowrap; border: 1.5px solid var(--brd2); background: transparent; cursor: pointer; }
+.t5 .cat.active { background: var(--terra); border-color: var(--terra); color: white; font-style: normal; font-weight: 700; }
+.t5 .scroll-area { flex: 1; overflow-y: auto; padding: 14px 20px 100px; scrollbar-width: none; }
+.t5 .scroll-area::-webkit-scrollbar { display: none; }
+.t5 .sec-hdr { text-align: center; margin-bottom: 14px; }
+.t5 .sec-title { font-family: 'Libre Baskerville', serif; font-size: 15px; font-weight: 700; color: var(--tx); text-transform: uppercase; letter-spacing: 0.05em; }
+.t5 .sec-underline { height: 2px; background: linear-gradient(90deg, transparent, var(--terra), transparent); margin-top: 4px; }
+.t5 .pcard { background: var(--paper); border: 1px solid var(--brd); border-radius: 5px; overflow: hidden; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(100,50,0,0.06); cursor: pointer; }
+.t5 .horiz { display: flex; }
+.t5 .img-side { width: 100px; flex-shrink: 0; background: var(--terra-l); display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; }
+.t5 .ribbon { position: absolute; top: 8px; left: -2px; background: var(--terra); color: white; font-size: 8px; font-weight: 600; padding: 3px 8px 3px 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.t5 .card-body { flex: 1; padding: 12px; }
+.t5 .cname { font-family: 'Libre Baskerville', serif; font-size: 14px; font-weight: 700; color: var(--tx); margin-bottom: 3px; line-height: 1.3; }
+.t5 .cdesc { font-size: 11px; color: var(--tx2); line-height: 1.5; margin-bottom: 8px; }
+.t5 .cfoot { display: flex; align-items: center; justify-content: space-between; }
+.t5 .price { font-family: 'Libre Baskerville', serif; font-size: 16px; font-weight: 700; color: var(--terra); }
+.t5 .add-btn { background: var(--terra); color: white; padding: 5px 12px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Source Sans 3', sans-serif; }
+.t5 .prow { padding: 12px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed var(--brd); cursor: pointer; }
+.t5 .prow:last-child { border-bottom: none; }
+.t5 .picon { width: 44px; height: 44px; background: var(--terra-l); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.t5 .pmid { flex: 1; }
+.t5 .pname { font-family: 'Libre Baskerville', serif; font-size: 13px; font-weight: 700; color: var(--tx); margin-bottom: 2px; }
+.t5 .pdesc { font-size: 11px; color: var(--tx2); line-height: 1.3; }
+.t5 .pright { text-align: right; }
+.t5 .pprice { font-family: 'Libre Baskerville', serif; font-size: 15px; font-weight: 700; color: var(--terra); display: block; margin-bottom: 4px; }
+.t5 .add { width: 24px; height: 24px; border: 1.5px solid var(--terra); border-radius: 3px; display: flex; align-items: center; justify-content: center; margin-left: auto; color: var(--terra); font-size: 15px; line-height: 1; cursor: pointer; }
+.t5 .fab { position: absolute; bottom: 24px; left: 20px; right: 20px; background: var(--terra); border-radius: 5px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(180,83,9,0.4); cursor: pointer; }
+.t5 .fab-count { background: rgba(255,255,255,0.2); color: white; font-size: 12px; font-weight: 600; width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.t5 .fab-label { color: white; font-size: 13px; font-weight: 600; margin-left: 10px; }
+.t5 .fab-total { font-family: 'Libre Baskerville', serif; color: white; font-size: 17px; font-weight: 700; }
+.t5 .powered { background: var(--bg); text-align: center; padding: 6px; font-size: 10px; color: var(--tx3); border-top: 2px solid var(--brd); }
+.t5 .powered span { color: var(--terra); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<p class="page-title">MyDigitable · Plan Básico</p>
+<h1 class="page-subtitle">5 Temas de Menú</h1>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTheme(1, this)">⬜ Modern Minimal</button>
+  <button class="tab-btn" onclick="showTheme(2, this)">🔵 Classic Bistro</button>
+  <button class="tab-btn" onclick="showTheme(3, this)">⬛ Craft &amp; Bold</button>
+  <button class="tab-btn" onclick="showTheme(4, this)">🤍 Nordic Clean</button>
+  <button class="tab-btn" onclick="showTheme(5, this)">🟤 Warm Rustic</button>
+</div>
+
+<!-- ==================== TEMA 1 ==================== -->
+<div class="theme-pane active" id="pane-1">
+  <div class="phone-wrap">
+    <div class="phone t1">
+      <div class="status-bar"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+      <div class="header">
+        <div class="header-left">
+          <div class="hamburger"><span></span><span></span><span></span></div>
+          <span class="brand">MYDIGITABLE</span>
+        </div>
+        <div class="cart-btn">
+          <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+          <div class="cart-badge">2</div>
+        </div>
+      </div>
+      <div class="search-wrap">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <span>Buscar en el menú…</span>
+        </div>
+      </div>
+      <div class="cats">
+        <button class="cat-pill active">Todos</button>
+        <button class="cat-pill">Brunch</button>
+        <button class="cat-pill">Mains</button>
+        <button class="cat-pill">Bowls</button>
+        <button class="cat-pill">Bebidas</button>
+      </div>
+      <div class="scroll-area">
+        <div class="section-label">⭐ Destacados</div>
+        <div class="grid">
+          <div class="card">
+            <div class="card-img">🥑<div class="badge">Popular</div></div>
+            <div class="card-body">
+              <div class="card-name">Avocado Toast</div>
+              <div class="card-desc">Pan sourdough, aguacate, huevo</div>
+              <div class="card-footer">
+                <span class="price">€14.50</span>
+                <div class="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-img">🐟</div>
+            <div class="card-body">
+              <div class="card-name">Salmon Bowl</div>
+              <div class="card-desc">Salmón, quinoa, verduras</div>
+              <div class="card-footer">
+                <span class="price">€18.90</span>
+                <div class="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="section-label">🥗 Entrantes</div>
+        <div class="list">
+          <div class="list-card">
+            <div class="list-img">🥗</div>
+            <div class="list-info">
+              <div class="list-name">Ensalada César</div>
+              <div class="list-desc">Lechuga romana, pollo, parmesano</div>
+              <div class="list-footer"><span class="price">€12.00</span><div class="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div></div>
+            </div>
+          </div>
+          <div class="list-card">
+            <div class="list-img">🍤</div>
+            <div class="list-info">
+              <div class="list-name">Croquetas Caseras</div>
+              <div class="list-desc">Jamón ibérico, bechamel cremosa</div>
+              <div class="list-footer"><span class="price">€8.50</span><div class="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="section-label">🍽️ Principales</div>
+        <div class="grid">
+          <div class="card">
+            <div class="card-img">🍗</div>
+            <div class="card-body">
+              <div class="card-name">Pollo Asado</div>
+              <div class="card-desc">Con patatas y ensalada</div>
+              <div class="card-footer"><span class="price">€16.90</span><div class="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-img">🍝</div>
+            <div class="card-body">
+              <div class="card-name">Pasta Trufa</div>
+              <div class="card-desc">Pasta fresca, crema de trufa</div>
+              <div class="card-footer"><span class="price">€15.50</span><div class="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fab">
+        <div class="fab-left"><div class="fab-count">2</div><span class="fab-label">Ver pedido</span></div>
+        <span class="fab-total">€33.40</span>
+      </div>
+      <div class="powered">Menú digital por <span>MyDigitable</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TEMA 2 ==================== -->
+<div class="theme-pane" id="pane-2">
+  <div class="phone-wrap">
+    <div class="phone t2">
+      <div class="status-bar"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+      <div class="hero-header">
+        <div class="header-top">
+          <div class="hamburger"><span></span><span></span><span></span></div>
+          <div class="brand-c">
+            <div class="brand-name">MYDIGITABLE</div>
+            <div class="brand-dots"><span>◆</span><span>◆</span><span>◆</span></div>
+          </div>
+          <div class="cart-icon">
+            <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+            <div class="cart-badge">2</div>
+          </div>
+        </div>
+        <div class="rest-info">
+          <div class="rest-name">Chez Pierre</div>
+          <div class="rest-sub">Cuisine Française · Table 5</div>
+        </div>
+        <div class="gold-line"></div>
+      </div>
+      <div class="nav-tabs">
+        <div class="tab active">Chef's</div>
+        <div class="tab">Starters</div>
+        <div class="tab">Mains</div>
+        <div class="tab">Wine</div>
+        <div class="tab">Desserts</div>
+      </div>
+      <div class="scroll-area">
+        <div class="featured">
+          <div class="feat-img">🍗</div>
+          <div class="feat-body">
+            <div class="feat-lbl">⭐ Plato de la Casa</div>
+            <div class="feat-name">Coq au Vin</div>
+            <div class="feat-foot"><span class="feat-price">€28.00</span><div class="feat-add">Pedir</div></div>
+          </div>
+        </div>
+        <div class="section-row"><div class="s-line"></div><div class="s-title">Entrées</div><div class="s-line"></div></div>
+        <div class="pcard">
+          <div class="pimg">🥗</div>
+          <div class="pinfo">
+            <div class="pname">Salade Niçoise</div>
+            <div class="pdesc">Atún, aceitunas, judías verdes, huevo pochado</div>
+            <div class="pfoot"><span class="price">€16.00</span><button class="add-btn">Añadir</button></div>
+          </div>
+        </div>
+        <div class="pcard">
+          <div class="pimg">🍜</div>
+          <div class="pinfo">
+            <div class="pname">Soupe à l'Oignon</div>
+            <div class="pdesc">Caldo de buey, cebolla caramelizada, gruyère</div>
+            <div class="pfoot"><span class="price">€12.50</span><button class="add-btn">Añadir</button></div>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:10px"><div class="s-line"></div><div class="s-title">Plats Principaux</div><div class="s-line"></div></div>
+        <div class="pcard">
+          <div class="pimg">🥩</div>
+          <div class="pinfo">
+            <div class="pname">Magret de Canard</div>
+            <div class="pdesc">Salsa de frutos rojos, puré de boniato, trufa</div>
+            <div class="pfoot"><span class="price">€32.00</span><button class="add-btn">Añadir</button></div>
+          </div>
+        </div>
+        <div class="pcard">
+          <div class="pimg">🐟</div>
+          <div class="pinfo">
+            <div class="pname">Sole Meunière</div>
+            <div class="pdesc">Lenguado, mantequilla tostada, alcaparras</div>
+            <div class="pfoot"><span class="price">€28.50</span><button class="add-btn">Añadir</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="fab">
+        <div style="display:flex;align-items:center"><div class="fab-count">2</div><span class="fab-label">Ver pedido</span></div>
+        <span class="fab-total">€44.00</span>
+      </div>
+      <div class="powered">Menú digital por <span>MyDigitable</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TEMA 3 ==================== -->
+<div class="theme-pane" id="pane-3">
+  <div class="phone-wrap">
+    <div class="phone t3">
+      <div class="status-bar"><span>9:41</span><span style="color:#C2783A">●●● ⚡</span></div>
+      <div class="header">
+        <div class="h-row">
+          <div class="hamburger"><span></span><span></span><span></span></div>
+          <div class="brand">MYDIGITABLE</div>
+          <div class="cart-btn">
+            <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+            <div class="cart-badge">3</div>
+          </div>
+        </div>
+        <div class="rest-name">The Craft<br>&amp; Barrel</div>
+        <div class="rest-sub">Craft Beer · American Kitchen · Mesa 7</div>
+      </div>
+      <div class="cats">
+        <div class="cat active">Burgers</div>
+        <div class="cat">Craft Beer</div>
+        <div class="cat">BBQ</div>
+        <div class="cat">Sides</div>
+        <div class="cat">Shakes</div>
+      </div>
+      <div class="scroll-area">
+        <div class="sec-title">Featured</div>
+        <div class="feat">
+          <div class="feat-img">🍔<div class="feat-tag">Best Seller</div></div>
+          <div class="feat-body">
+            <div class="feat-name">The Barrel Burger</div>
+            <div class="feat-desc">Doble ternera, bacon ahumado, queso cheddar, salsa especial de la casa</div>
+            <div class="feat-foot"><span class="feat-price">€16.90</span><div class="feat-btn">Order</div></div>
+          </div>
+        </div>
+        <div class="sec-title">Burgers</div>
+        <div style="border-top:1px solid var(--brd)">
+          <div class="prow">
+            <div class="pnum">01</div>
+            <div class="pimg">🥩</div>
+            <div class="pinfo"><div class="pname">Smash Burger</div><div class="pdesc">Doble smash, cheddar americano, pepinillo</div></div>
+            <div class="pright"><span class="price">€13.90</span><div class="add">+</div></div>
+          </div>
+          <div class="prow">
+            <div class="pnum">02</div>
+            <div class="pimg">🍗</div>
+            <div class="pinfo"><div class="pname">Chicken Crispy</div><div class="pdesc">Muslo crujiente, coleslaw, jalapeño</div></div>
+            <div class="pright"><span class="price">€12.90</span><div class="add">+</div></div>
+          </div>
+          <div class="prow">
+            <div class="pnum">03</div>
+            <div class="pimg">🌱</div>
+            <div class="pinfo"><div class="pname">Mushroom Umami</div><div class="pdesc">Plant-based, setas shiitake, trufa, rúcula</div></div>
+            <div class="pright"><span class="price">€13.50</span><div class="add">+</div></div>
+          </div>
+        </div>
+        <div class="sec-title" style="margin-top:8px">Craft Beer</div>
+        <div style="border-top:1px solid var(--brd)">
+          <div class="prow">
+            <div class="pnum">01</div>
+            <div class="pimg">🍺</div>
+            <div class="pinfo"><div class="pname">IPA Session</div><div class="pdesc">Lúpulo cítrico, 4.5% ABV — Pinta 500ml</div></div>
+            <div class="pright"><span class="price">€5.50</span><div class="add">+</div></div>
+          </div>
+          <div class="prow">
+            <div class="pnum">02</div>
+            <div class="pimg">🍻</div>
+            <div class="pinfo"><div class="pname">Stout Barrel Aged</div><div class="pdesc">Barrica bourbon, chocolate, 7.2% ABV</div></div>
+            <div class="pright"><span class="price">€6.50</span><div class="add">+</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="fab">
+        <div style="display:flex;align-items:center"><div class="fab-count">3</div><span class="fab-label">Ver Order</span></div>
+        <span class="fab-total">€43.30</span>
+      </div>
+      <div class="powered">Menú digital por <span>MyDigitable</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TEMA 4 ==================== -->
+<div class="theme-pane" id="pane-4">
+  <div class="phone-wrap">
+    <div class="phone t4">
+      <div class="status-bar"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+      <div class="header">
+        <div class="h-top">
+          <div class="hamburger"><span></span><span></span><span></span></div>
+          <div class="h-icons">
+            <div class="h-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+            <div class="h-icon"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg><div class="dot"></div></div>
+          </div>
+        </div>
+        <div class="brand-area">
+          <div class="brand-row"><div class="brand-line"></div><div class="brand-txt">MYDIGITABLE</div><div class="brand-line"></div></div>
+          <div class="rest-name">Nordic Table</div>
+          <div class="rest-sub">Cocina Nórdica · Mesa 3</div>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="nav-item active">Todo</div>
+        <div class="nav-item">Brunch</div>
+        <div class="nav-item">Bowls</div>
+        <div class="nav-item">Bebidas</div>
+        <div class="nav-item">Postres</div>
+      </div>
+      <div class="scroll-area">
+        <div class="hero">
+          <div class="hero-img">🥑</div>
+          <div class="hero-cap">
+            <div><div class="hero-name">Avocado Open Toast</div><div class="hero-desc">Masa madre, aguacate, semillas, limón</div></div>
+            <div class="hero-price">€14.50</div>
+          </div>
+        </div>
+        <div class="sec-lbl">Brunch</div>
+        <div class="photo-grid">
+          <div class="gi"><div class="gi-img">🥚</div><div class="gi-cap"><div class="gi-name">Eggs Benedict</div><div class="gi-desc">Huevo pochado, holandesa</div><div class="gi-foot"><span class="price">€13.50</span><div class="add-circle">+</div></div></div></div>
+          <div class="gi"><div class="gi-img">🥣</div><div class="gi-cap"><div class="gi-name">Porridge Nórdico</div><div class="gi-desc">Avena, arándanos, maple</div><div class="gi-foot"><span class="price">€9.50</span><div class="add-circle">+</div></div></div></div>
+          <div class="gi"><div class="gi-img">🍞</div><div class="gi-cap"><div class="gi-name">Rye Bread Board</div><div class="gi-desc">Centeno, mantequilla, salmón</div><div class="gi-foot"><span class="price">€16.00</span><div class="add-circle">+</div></div></div></div>
+          <div class="gi"><div class="gi-img">☕</div><div class="gi-cap"><div class="gi-name">Flat White</div><div class="gi-desc">Espresso doble, leche</div><div class="gi-foot"><span class="price">€4.50</span><div class="add-circle">+</div></div></div></div>
+        </div>
+        <div class="sec-lbl">Bowls</div>
+        <div class="list-sec">
+          <div class="lrow"><div><div class="lname">Salmon Poke Bowl</div><div class="ldesc">Salmón fresco, arroz sushi, mango, edamame</div></div><div class="lright"><span class="lprice">€18.90</span><div class="add-circle">+</div></div></div>
+          <div class="lrow"><div><div class="lname">Green Goddess Bowl</div><div class="ldesc">Quinoa, aguacate, pepino, tahini</div></div><div class="lright"><span class="lprice">€15.50</span><div class="add-circle">+</div></div></div>
+        </div>
+      </div>
+      <div class="fab">
+        <div style="display:flex;align-items:center"><div class="fab-count">2</div><span class="fab-label">Ver pedido</span></div>
+        <span class="fab-total">€32.00</span>
+      </div>
+      <div class="powered">Menú digital por <span>MyDigitable</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TEMA 5 ==================== -->
+<div class="theme-pane" id="pane-5">
+  <div class="phone-wrap">
+    <div class="phone t5">
+      <div class="status-bar"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+      <div class="header">
+        <div class="ornament">· · · ✦ · · ·</div>
+        <div class="h-top">
+          <div class="hamburger"><span></span><span></span><span></span></div>
+          <div class="brand-c">
+            <div class="brand-top">Menú digital por</div>
+            <div class="brand-name">MYDIGITABLE</div>
+          </div>
+          <div class="cart-a">
+            <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+            <div class="cart-badge">2</div>
+          </div>
+        </div>
+        <div class="rest-area">
+          <div class="rest-name">Nonna's<br>Cucina</div>
+          <div class="rest-sub">Cucina italiana tradizionale</div>
+        </div>
+        <div class="div-orn"><div class="div-line"></div><div class="div-sym">🌿</div><div class="div-line"></div></div>
+      </div>
+      <div class="cats">
+        <div class="cat active">Antipasti</div>
+        <div class="cat">Pasta</div>
+        <div class="cat">Secondi</div>
+        <div class="cat">Pizza</div>
+        <div class="cat">Dolci</div>
+      </div>
+      <div class="scroll-area">
+        <div class="sec-hdr"><div class="sec-title">Antipasti</div><div class="sec-underline"></div></div>
+        <div class="pcard horiz">
+          <div class="img-side">🍖<div class="ribbon">★ Speciale</div></div>
+          <div class="card-body">
+            <div class="cname">Tagliere della Nonna</div>
+            <div class="cdesc">Jamones italianos, quesos curados, olivas, mostarda</div>
+            <div class="cfoot"><span class="price">€18.00</span><button class="add-btn">Ordenar</button></div>
+          </div>
+        </div>
+        <div class="pcard">
+          <div class="prow"><div class="picon">🧅</div><div class="pmid"><div class="pname">Bruschetta al Pomodoro</div><div class="pdesc">Pan tostado, tomate, albahaca, AOVE</div></div><div class="pright"><span class="pprice">€7.50</span><div class="add">+</div></div></div>
+          <div class="prow"><div class="picon">🧀</div><div class="pmid"><div class="pname">Burrata Pugliese</div><div class="pdesc">Burrata fresca, tomates cherry, pesto genovese</div></div><div class="pright"><span class="pprice">€12.00</span><div class="add">+</div></div></div>
+        </div>
+        <div class="sec-hdr" style="margin-top:16px"><div class="sec-title">Pasta Fresca</div><div class="sec-underline"></div></div>
+        <div class="pcard horiz">
+          <div class="img-side">🍝</div>
+          <div class="card-body">
+            <div class="cname">Spaghetti alla Carbonara</div>
+            <div class="cdesc">Receta original romana. Guanciale, Pecorino, uovo, pepe nero</div>
+            <div class="cfoot"><span class="price">€15.50</span><button class="add-btn">Ordenar</button></div>
+          </div>
+        </div>
+        <div class="pcard">
+          <div class="prow"><div class="picon">🍜</div><div class="pmid"><div class="pname">Pappardelle al Cinghiale</div><div class="pdesc">Ragù de jabalí, vino tinto, hierbas</div></div><div class="pright"><span class="pprice">€17.00</span><div class="add">+</div></div></div>
+          <div class="prow"><div class="picon">🌿</div><div class="pmid"><div class="pname">Ravioli di Ricotta</div><div class="pdesc">Relleno de ricotta y espinacas, mantequilla y salvia</div></div><div class="pright"><span class="pprice">€14.50</span><div class="add">+</div></div></div>
+        </div>
+      </div>
+      <div class="fab">
+        <div style="display:flex;align-items:center"><div class="fab-count">2</div><span class="fab-label">Ver il pedido</span></div>
+        <span class="fab-total">€30.00</span>
+      </div>
+      <div class="powered">Menú digital por <span>MyDigitable</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTheme(n, btn) {
+  document.querySelectorAll('.theme-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + n).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

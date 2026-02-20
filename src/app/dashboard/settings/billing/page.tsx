@@ -129,7 +129,7 @@ export default function BillingPage() {
 
     const handleUpgrade = async (planId: string) => {
         // Here you would integrate with Stripe or your payment provider
-        console.log('Upgrade to:', planId);
+
         alert(`Próximamente: Integración con Stripe para el plan ${planId}`);
     };
 

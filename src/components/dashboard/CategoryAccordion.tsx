@@ -42,13 +42,15 @@ interface CategoryAccordionProps {
     onDelete: () => void;
     onAddProduct: (categoryId: string) => void;
     onEditProduct: (product: Product) => void;
+    menuName?: string;
 }
 
 // Helper to get Icon component dynamically
-const getIcon = (iconName: string) => {
+const getIcon = (iconName: string | null | undefined) => {
+    if (!iconName) return null;
     // @ts-ignore
-    const Icon = Icons[iconName] || Icons.Utensils;
-    return Icon;
+    const Icon = Icons[iconName];
+    return Icon || null;
 };
 
 export function CategoryAccordion({
@@ -58,7 +60,8 @@ export function CategoryAccordion({
     onEdit,
     onDelete,
     onAddProduct,
-    onEditProduct
+    onEditProduct,
+    menuName
 }: CategoryAccordionProps) {
     const [isOpen, setIsOpen] = useState(false);
     const Icon = getIcon(category.icon);
@@ -75,7 +78,7 @@ export function CategoryAccordion({
                 </div>
 
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${category.is_active ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-400'}`}>
-                    <Icon size={20} />
+                    {Icon ? <Icon size={20} /> : <span className="text-sm font-bold">{(category.name_es || '?').charAt(0).toUpperCase()}</span>}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -89,8 +92,13 @@ export function CategoryAccordion({
                             </span>
                         )}
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 flex items-center gap-2">
                         {products.length} productos
+                        {menuName && (
+                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">
+                                {menuName}
+                            </span>
+                        )}
                     </p>
                 </div>
 

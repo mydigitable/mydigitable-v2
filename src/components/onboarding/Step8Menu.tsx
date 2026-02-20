@@ -1,112 +1,93 @@
 "use client";
 
-import { FileText, Sparkles, Clock } from "lucide-react";
+import { UtensilsCrossed, FileText, Sparkles, Zap } from "lucide-react";
 
 interface Props {
-    data: any;
-    onUpdate: (data: any) => void;
+    formData: any;
+    updateFormData: (data: any) => void;
 }
 
-const menuOptions = [
-    {
-        id: "empty",
-        icon: FileText,
-        title: "Crear menú vacío",
-        description: "Solo estructura básica, tú añades los productos",
-        recommended: true,
-    },
-    {
-        id: "demo",
-        icon: Sparkles,
-        title: "Importar menú demo",
-        description: "Datos de ejemplo para explorar el sistema",
-        recommended: false,
-    },
-    {
-        id: "later",
-        icon: Clock,
-        title: "Lo hago después",
-        description: "Configuraré el menú desde el dashboard",
-        recommended: false,
-    },
-];
-
-export function Step8Menu({ data, onUpdate }: Props) {
-    const selected = data.menu_option || "empty";
+export function Step8Menu({ formData, updateFormData }: Props) {
+    const options = [
+        {
+            id: 'empty',
+            icon: FileText,
+            title: 'Menú vacío',
+            description: 'Lo llenaré yo mismo después',
+            recommended: false,
+        },
+        {
+            id: 'demo',
+            icon: Zap,
+            title: 'Menú de demostración',
+            description: 'Para probar la plataforma',
+            recommended: true,
+        },
+        {
+            id: 'ai',
+            icon: Sparkles,
+            title: 'Importar con IA',
+            description: 'Próximamente - Sube foto de tu menú',
+            disabled: true,
+        },
+    ];
 
     return (
-        <div className="space-y-6">
-            <p className="text-sm text-slate-500 text-center mb-6">
-                ¿Cómo quieres empezar con tu menú digital?
-            </p>
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-3xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <UtensilsCrossed className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-2">
+                    Tu Menú
+                </h2>
+                <p className="text-slate-500">
+                    ¿Cómo quieres empezar con tu menú?
+                </p>
+            </div>
 
-            <div className="space-y-4">
-                {menuOptions.map((option) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {options.map((option) => (
                     <button
                         key={option.id}
                         type="button"
-                        onClick={() => onUpdate({ menu_option: option.id })}
-                        className={`w-full p-5 rounded-2xl border-2 transition-all text-left flex items-start gap-4 relative ${selected === option.id
-                                ? "border-primary bg-primary/5"
-                                : "border-slate-100 hover:border-slate-200 bg-white"
+                        onClick={() => !option.disabled && updateFormData({ menu_option: option.id })}
+                        disabled={option.disabled}
+                        className={`relative p-6 rounded-2xl border-2 transition-all text-center ${option.disabled
+                                ? "border-slate-200 bg-slate-50 opacity-50 cursor-not-allowed"
+                                : formData.menu_option === option.id
+                                    ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+                                    : "border-slate-200 hover:border-primary bg-white hover:scale-105"
                             }`}
                     >
                         {option.recommended && (
-                            <span className="absolute -top-2 -right-2 px-2 py-1 bg-primary text-white text-[10px] font-black rounded-full">
-                                RECOMENDADO
+                            <span className="absolute top-3 right-3 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
+                                Recomendado
                             </span>
                         )}
 
-                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${selected === option.id
-                                ? "bg-primary text-white"
-                                : "bg-slate-100 text-slate-400"
+                        <div className={`w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-4 ${option.disabled
+                                ? "bg-slate-200 text-slate-400"
+                                : formData.menu_option === option.id
+                                    ? "bg-primary text-white"
+                                    : "bg-slate-100 text-slate-400"
                             }`}>
-                            <option.icon size={28} />
+                            <option.icon size={32} />
                         </div>
 
-                        <div className="flex-1">
-                            <h4 className="font-bold text-slate-900 mb-1">{option.title}</h4>
-                            <p className="text-sm text-slate-500">{option.description}</p>
-                        </div>
-
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-2 ${selected === option.id
-                                ? "border-primary bg-primary"
-                                : "border-slate-200"
-                            }`}>
-                            {selected === option.id && (
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                            )}
-                        </div>
+                        <h4 className="font-bold text-slate-900 text-lg mb-2">{option.title}</h4>
+                        <p className="text-sm text-slate-500">{option.description}</p>
                     </button>
                 ))}
             </div>
 
-            {/* Info for each option */}
-            {selected === "empty" && (
-                <div className="p-4 bg-green-50 rounded-2xl border border-green-200">
-                    <p className="text-sm text-green-700">
-                        ✅ Se creará una categoría "General" vacía. Podrás añadir tus productos desde el dashboard.
-                    </p>
-                </div>
-            )}
-
-            {selected === "demo" && (
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200">
-                    <p className="text-sm text-blue-700">
-                        📋 Incluye: 3 categorías (Entrantes, Principales, Postres) con 5 productos de ejemplo cada una.
-                    </p>
-                </div>
-            )}
-
-            {selected === "later" && (
-                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
-                    <p className="text-sm text-amber-700">
-                        ⏰ No te preocupes. Encontrarás el editor de menú en Dashboard → Menú
-                    </p>
-                </div>
-            )}
+            {/* Info adicional */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-sm text-blue-700 font-medium text-center">
+                    💡 No te preocupes, podrás editar y personalizar tu menú completamente desde el dashboard
+                </p>
+            </div>
         </div>
     );
 }

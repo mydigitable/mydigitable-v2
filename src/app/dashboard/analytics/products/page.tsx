@@ -42,7 +42,9 @@ export default function ProductsAnalyticsPage() {
             .from("restaurants")
             .select("id")
             .eq("owner_id", user.id)
-            .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .single();
 
         if (restaurant) {
             // Get products with order items count
@@ -97,8 +99,8 @@ export default function ProductsAnalyticsPage() {
                 <button
                     onClick={() => setSortBy('sold')}
                     className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors ${sortBy === 'sold'
-                            ? 'bg-primary text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                 >
                     Por Unidades
@@ -106,8 +108,8 @@ export default function ProductsAnalyticsPage() {
                 <button
                     onClick={() => setSortBy('revenue')}
                     className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors ${sortBy === 'revenue'
-                            ? 'bg-primary text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                 >
                     Por Ingresos

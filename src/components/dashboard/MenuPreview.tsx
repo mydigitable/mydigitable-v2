@@ -10,7 +10,6 @@ interface Product {
     name_en: string | null;
     description_es: string | null;
     price: number;
-    compare_price: number | null;
     image_url: string | null;
     is_available: boolean;
     is_featured: boolean;
@@ -36,10 +35,11 @@ interface MenuPreviewProps {
     onClose: () => void;
 }
 
-const getIcon = (iconName: string) => {
+const getIcon = (iconName: string | null | undefined) => {
+    if (!iconName) return null;
     // @ts-ignore
-    const Icon = Icons[iconName] || Icons.Utensils;
-    return Icon;
+    const Icon = Icons[iconName];
+    return Icon || null;
 };
 
 export function MenuPreview({ restaurant, categories, isOpen, onClose }: MenuPreviewProps) {
@@ -131,7 +131,7 @@ export function MenuPreview({ restaurant, categories, isOpen, onClose }: MenuPre
                                     <details key={category.id} className="group" open>
                                         <summary className="flex items-center gap-3 mb-4 sticky top-0 bg-slate-100/95 backdrop-blur py-2 z-10 cursor-pointer list-none select-none">
                                             <div className={`w-8 h-8 rounded-lg ${themeColor} bg-opacity-10 text-emerald-700 flex items-center justify-center transition-transform group-open:rotate-0`}>
-                                                <Icon size={18} />
+                                                {Icon ? <Icon size={18} /> : <span className="text-xs font-bold">{(category.name_es || '?').charAt(0)}</span>}
                                             </div>
                                             <div className="flex-1 flex items-center justify-between">
                                                 <h4 className="font-bold text-slate-800 text-lg">{category.name_es}</h4>
