@@ -255,6 +255,12 @@ export default function MenusPage() {
                     alert(`Error al crear menú: ${result.error}`);
                     return;
                 }
+
+                // Redirect to wizard for the new menu
+                if (result.data?.id) {
+                    router.push(`/dashboard/menu/menus/${result.data.id}`);
+                    return;
+                }
             }
 
             await loadData();
@@ -515,10 +521,7 @@ export default function MenusPage() {
                                         {/* Edit & Delete */}
                                         <div className="flex items-center gap-1">
                                             <button
-                                                onClick={() => {
-                                                    setEditingMenu(menu);
-                                                    setShowModal(true);
-                                                }}
+                                                onClick={() => router.push(`/dashboard/menu/menus/${menu.id}`)}
                                                 className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                                                 title="Editar"
                                             >
