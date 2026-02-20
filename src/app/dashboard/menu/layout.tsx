@@ -12,9 +12,7 @@ function MenuLayoutContent({ children }: { children: ReactNode }) {
 
     // Design Studio has its own preview — hide the global one
     const isDesignPage = pathname?.includes('/design');
-    // Unified menu manager has its own 3-column preview
-    const isUnifiedMenuPage = pathname === '/dashboard/menu';
-    const shouldShowPreview = showPreview && !isDesignPage && !isUnifiedMenuPage;
+    const shouldShowPreview = showPreview && !isDesignPage;
 
     return (
         <div className="flex min-h-screen bg-slate-50/50">
@@ -67,8 +65,8 @@ function MenuLayoutContent({ children }: { children: ReactNode }) {
                 </div>
             )}
 
-            {/* Floating Buttons — shows when preview is closed (non-design/non-unified pages) */}
-            {!isDesignPage && !isUnifiedMenuPage && !showPreview && (
+            {/* Floating Buttons — shows when preview is closed (non-design pages) */}
+            {!isDesignPage && !showPreview && (
                 <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
                     {restaurant?.slug && (
                         <a

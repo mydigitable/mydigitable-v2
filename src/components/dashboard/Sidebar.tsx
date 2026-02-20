@@ -48,8 +48,17 @@ const navigation: NavItem[] = [
     // INICIO
     { label: "Inicio", href: "/dashboard", icon: LayoutDashboard },
 
-    // MENÚ (unificado)
-    { label: "Mi Menú", href: "/dashboard/menu", icon: UtensilsCrossed },
+    // MENÚ (with submenu)
+    {
+        label: "Mi Menú",
+        icon: UtensilsCrossed,
+        children: [
+            { label: "Gestión de Menús", href: "/dashboard/menu/menus", icon: Layers },
+            { label: "Categorías", href: "/dashboard/menu/categories", icon: Tag },
+            { label: "Todos los Productos", href: "/dashboard/menu/products", icon: Store },
+            { label: "Diseño del Menú", href: "/dashboard/menu/design", icon: Palette },
+        ],
+    },
 
     // QR CODES
     { label: "QR Codes", href: "/dashboard/qr", icon: QrCode },
