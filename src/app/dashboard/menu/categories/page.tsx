@@ -7,11 +7,9 @@ import {
     Plus,
     Loader2,
     Search,
-    Smartphone,
-    Eye
 } from "lucide-react";
 import { CategoryAccordion } from "@/components/dashboard/CategoryAccordion";
-import { ProductModal } from "@/components/dashboard/ProductModal";
+
 import { CategoryModal } from "@/components/dashboard/CategoryModal";
 import {
     createCategory,
@@ -19,8 +17,6 @@ import {
     deleteCategory as deleteCategoryAction,
     toggleCategoryVisible,
     reorderCategories,
-    createProduct,
-    updateProduct,
 } from "@/app/actions/menu";
 import { useMenu } from "@/contexts/MenuContext";
 
@@ -76,13 +72,11 @@ export default function CategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [menus, setMenus] = useState<MenuInfo[]>([]);
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
 
     // Modals
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-    const [showProductModal, setShowProductModal] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    // TODO: replace with new ProductModal when available
     const [preselectedCategoryId, setPreselectedCategoryId] = useState<string>('');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -254,56 +248,11 @@ export default function CategoriesPage() {
 
     // --- HANDLERS: PRODUCTS (using server actions) ---
     const handleOpenProductModal = (categoryId: string, product: Product | null = null) => {
-        setPreselectedCategoryId(categoryId);
-        setEditingProduct(product);
-        setShowProductModal(true);
+        // TODO: implement new ProductModal
+        console.log('ProductModal pendiente — categoryId:', categoryId, 'product:', product?.name_es);
     };
 
-    const handleSaveProduct = async (data: Partial<Product>) => {
-        setSaving(true);
-        try {
-            if (editingProduct) {
-                const result = await updateProduct(editingProduct.id, {
-                    name: data.name_es,
-                    description: data.description_es || undefined,
-                    price: data.price,
-                    image_url: data.image_url || undefined,
-                    allergens: data.allergens || [],
-                    is_available: data.is_available ?? true,
-                });
 
-                if (!result.success) {
-                    alert(`Error: ${result.error}`);
-                    return;
-                }
-            } else {
-                const result = await createProduct({
-                    category_id: data.category_id || preselectedCategoryId,
-                    name: data.name_es || '',
-                    description: data.description_es || undefined,
-                    price: data.price || 0,
-                    image_url: data.image_url || undefined,
-                    allergens: data.allergens || [],
-                    is_available: data.is_available ?? true,
-                });
-
-                if (!result.success) {
-                    alert(`Error: ${result.error}`);
-                    return;
-                }
-            }
-
-            await loadData();
-            refreshMenu();
-            setShowProductModal(false);
-            setEditingProduct(null);
-        } catch (err) {
-            console.error(err);
-            alert("Error al guardar producto");
-        } finally {
-            setSaving(false);
-        }
-    };
 
     // --- RENDER ---
     const filteredCategories = categories.filter(cat =>
@@ -328,11 +277,7 @@ export default function CategoriesPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => {
-                            setPreselectedCategoryId(categories[0]?.id || '');
-                            setEditingProduct(null);
-                            setShowProductModal(true);
-                        }}
+                        onClick={() => handleOpenProductModal(categories[0]?.id || '')}
                         className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 hover:border-slate-300 bg-white text-slate-700 rounded-lg font-medium text-sm transition-colors"
                     >
                         <Plus size={16} />
@@ -408,18 +353,7 @@ export default function CategoriesPage() {
                 )}
             </AnimatePresence>
 
-            {/* Modal: Product */}
-            <AnimatePresence>
-                {showProductModal && (
-                    <ProductModal
-                        product={editingProduct}
-                        categories={categories}
-                        saving={saving}
-                        onSave={handleSaveProduct}
-                        onClose={() => setShowProductModal(false)}
-                    />
-                )}
-            </AnimatePresence>
+            {/* TODO: ProductModal eliminado en limpieza — reimplementar si se necesita */}
         </div>
     );
 }
