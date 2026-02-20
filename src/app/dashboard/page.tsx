@@ -35,11 +35,11 @@ export default async function DashboardPage() {
         onboardingResult
     ] = await Promise.allSettled([
         // 1. Mesas (Todas)
-        supabase.from('tables').select('*').eq('restaurant_id', restaurant.id).order('number'),
+        supabase.from('tables').select('*').eq('restaurant_id', restaurant.id).order('table_number'),
 
         // 2. Pedidos Activos (Para la lista y contador)
         supabase.from('orders')
-            .select('id, table_id, status, total_amount, created_at')
+            .select('id, table_id, status, total, created_at')
             .eq('restaurant_id', restaurant.id)
             .in('status', ['pending', 'preparing', 'ready'])
             .order('created_at', { ascending: false })
@@ -47,19 +47,20 @@ export default async function DashboardPage() {
 
         // 3. Pedidos de Hoy (Para ventas totales)
         supabase.from('orders')
-            .select('total_amount, created_at')
+            .select('total, created_at')
             .eq('restaurant_id', restaurant.id)
             .gte('created_at', `${today}T00:00:00`)
-            .neq('status', 'cancelled'), // Incluimos completed y activos para "Ventas Hoy" proyeccion
+            .neq('status', 'canceled'),
 
         // 4. Llamadas al mozo
-        supabase.from('service_requests')
+        supabase.from('waiter_calls')
             .select('*')
             .eq('restaurant_id', restaurant.id)
             .eq('status', 'pending'),
 
         // 5. Onboarding status (si es necesario para alguna lógica futura)
-        supabase.from('onboarding_progress').select('*').eq('restaurant_id', restaurant.id).single()
+        // onboarding_progress table doesn't exist yet — placeholder
+        Promise.resolve({ data: null, error: null })
     ])
 
     // Procesar resultados
@@ -69,7 +70,7 @@ export default async function DashboardPage() {
     const waiterCalls = waiterCallsResult.status === 'fulfilled' ? waiterCallsResult.value.data || [] : []
 
     // Calcular métricas
-    const todayRevenue = todayOrders.reduce((acc, order) => acc + (order.total_amount || 0), 0)
+    const todayRevenue = todayOrders.reduce((acc, order) => acc + (order.total || 0), 0)
     const averageTicket = todayOrders.length > 0 ? todayRevenue / todayOrders.length : 0
     const onboardingSteps = onboardingResult.status === 'fulfilled' && onboardingResult.value.data ? onboardingResult.value.data.completed_steps : 0
 

@@ -15,7 +15,7 @@ import {
 interface ModifierGroup {
     id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string;
     name_en: string | null;
     type: 'addon' | 'size' | 'removal' | 'option';
     is_required: boolean;
@@ -25,7 +25,7 @@ interface ModifierGroup {
 
 interface Modifier {
     id: string;
-    name_es: string;
+    name: string;
     name_en: string | null;
     price_adjustment: number;
     is_active: boolean;
@@ -78,7 +78,7 @@ export default function ModifiersPage() {
     };
 
     const filteredGroups = groups.filter(g =>
-        g.name_es?.toLowerCase().includes(searchTerm.toLowerCase())
+        g.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -143,7 +143,7 @@ export default function ModifiersPage() {
                                         <Tag size={20} className="text-slate-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-900">{group.name_es}</h3>
+                                        <h3 className="font-bold text-slate-900">{group.name}</h3>
                                         <div className="flex items-center gap-2 mt-2">
                                             <span className={`px-2 py-1 rounded-lg text-xs font-bold ${typeLabels[group.type]?.color || 'bg-slate-100 text-slate-600'}`}>
                                                 {typeLabels[group.type]?.label || group.type}

@@ -200,7 +200,7 @@ export function DashboardModernClient({ initialData }: DashboardModernClientProp
                             <tr key={order.id}>
                                 <td style={{ fontWeight: 600 }}>#{order.id.toString().slice(0, 4)}</td>
                                 <td>{order.table_id || '-'}</td>
-                                <td style={{ fontWeight: 700 }}>€{order.total_amount?.toFixed(2)}</td>
+                                <td style={{ fontWeight: 700 }}>€{order.total?.toFixed(2)}</td>
                                 <td>
                                     <span className={styles.statusPill} style={{
                                         background: order.status === 'completed' ? '#dcfce7' : order.status === 'preparing' ? '#fff7ed' : '#fee2e2',

@@ -32,15 +32,16 @@ import {
     createCategory,
 } from "@/app/actions/menu";
 import { useMenu } from "@/contexts/MenuContext";
+import { extractName } from "@/lib/utils";
 
 // --- INTERFACES ---
 interface Product {
     id: string;
     category_id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string;
     name_en: string | null;
-    description_es: string | null;
+    description: string | null;
     price: number;
     image_url: string | null;
     allergens: string[] | null;
@@ -53,7 +54,7 @@ interface Product {
 
 interface Category {
     id: string;
-    name_es: string;
+    name: string;
     icon: string;
 }
 
@@ -63,13 +64,7 @@ interface MenuInfo {
     is_active: boolean;
 }
 
-// Helper to extract name
-function extractName(name: string | Record<string, string> | null | undefined): string {
-    if (!name) return "Sin nombre";
-    if (typeof name === "string") return name;
-    if (typeof name === "object" && name.es) return name.es;
-    return String(name);
-}
+// (extractName imported from @/lib/utils)
 
 export default function ProductsPage() {
     // --- STATE ---
@@ -130,7 +125,7 @@ export default function ProductsPage() {
 
             const mappedCategories: Category[] = (categoriesData || []).map((cat: Record<string, unknown>) => ({
                 id: cat.id as string,
-                name_es: extractName(cat.name as string | Record<string, string>),
+                name: extractName(cat.name as string | Record<string, string>),
                 icon: (cat.icon as string) || '',
             }));
             setCategories(mappedCategories);
@@ -145,13 +140,13 @@ export default function ProductsPage() {
 
             // Build category name map
             const catMap: Record<string, string> = {};
-            mappedCategories.forEach(c => { catMap[c.id] = c.name_es; });
+            mappedCategories.forEach(c => { catMap[c.id] = c.name; });
 
             // Map products with category name
             const mappedProducts: Product[] = (productsData || []).map((p: Record<string, unknown>) => ({
                 ...p,
-                name_es: extractName(p.name as string | Record<string, string>),
-                description_es: (p.description as Record<string, string>)?.es || (p.description_es as string) || '',
+                name: extractName(p.name as string | Record<string, string>),
+                description: extractName(p.description as string | Record<string, string>),
                 is_featured: false,
                 sort_order: (p.display_order as number) || (p.sort_order as number) || 0,
                 category_name: catMap[p.category_id as string] || 'Sin categoría',
@@ -232,8 +227,8 @@ export default function ProductsPage() {
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             return (
-                product.name_es.toLowerCase().includes(query) ||
-                product.description_es?.toLowerCase().includes(query) ||
+                product.name.toLowerCase().includes(query) ||
+                product.description?.toLowerCase().includes(query) ||
                 product.category_name?.toLowerCase().includes(query)
             );
         }
@@ -241,14 +236,14 @@ export default function ProductsPage() {
     });
 
     // --- CATEGORY CREATION HANDLER ---
-    const handleSaveCategory = async (data: { name_es?: string; description_es?: string | null; menu_ids?: string[] }) => {
+    const handleSaveCategory = async (data: { name?: string | Record<string, string>; description?: string | Record<string, string> | null; menu_ids?: string[] }) => {
         try {
             const menuIds = data.menu_ids || [];
             if (menuIds.length === 0) {
                 const result = await createCategory({
                     menu_id: null,
-                    name: data.name_es || '',
-                    description: data.description_es || undefined,
+                    name: extractName(data.name) || '',
+                    description: extractName(data.description) || undefined,
                     is_visible: true,
                 });
                 if (!result.success) {
@@ -259,8 +254,8 @@ export default function ProductsPage() {
                 for (const menuId of menuIds) {
                     const result = await createCategory({
                         menu_id: menuId,
-                        name: data.name_es || '',
-                        description: data.description_es || undefined,
+                        name: extractName(data.name) || '',
+                        description: extractName(data.description) || undefined,
                         is_visible: true,
                     });
                     if (!result.success) {
@@ -380,7 +375,7 @@ export default function ProductsPage() {
                             <option value="">Todas las categorías</option>
                             {categories.map((cat) => (
                                 <option key={cat.id} value={cat.id}>
-                                    {cat.name_es}
+                                    {cat.name}
                                 </option>
                             ))}
                         </select>
@@ -479,7 +474,7 @@ export default function ProductsPage() {
                                             {product.image_url ? (
                                                 <img
                                                     src={product.image_url}
-                                                    alt={product.name_es}
+                                                    alt={product.name}
                                                     className="w-12 h-12 rounded-xl object-cover"
                                                 />
                                             ) : (
@@ -488,7 +483,7 @@ export default function ProductsPage() {
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="font-bold text-slate-900">{product.name_es}</p>
+                                                <p className="font-bold text-slate-900">{product.name}</p>
                                                 <div className="flex items-center gap-1 mt-0.5">
                                                     {product.dietary_tags?.includes('vegetarian') && <span title="Vegetariano">🥬</span>}
                                                     {product.dietary_tags?.includes('vegan') && <span title="Vegano">🌱</span>}
@@ -560,7 +555,7 @@ export default function ProductsPage() {
             {showProModal && (
                 <CreateProductModalPro
                     categoryId={selectedCategory || categories[0]?.id || ''}
-                    categoryName={selectedCategory ? categories.find(c => c.id === selectedCategory)?.name_es : categories[0]?.name_es}
+                    categoryName={selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : categories[0]?.name}
                     categories={categories}
                     allProducts={products}
                     product={editingProduct}
@@ -621,7 +616,7 @@ function ProductCard({
                 {product.image_url ? (
                     <img
                         src={product.image_url}
-                        alt={product.name_es}
+                        alt={product.name}
                         className="w-full h-full object-cover"
                     />
                 ) : (
@@ -694,10 +689,10 @@ function ProductCard({
                     <span className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded font-medium">{product.category_name}</span>
                 </div>
 
-                <h3 className="font-bold text-slate-900 line-clamp-1">{product.name_es}</h3>
+                <h3 className="font-bold text-slate-900 line-clamp-1">{product.name}</h3>
 
-                {product.description_es && (
-                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">{product.description_es}</p>
+                {product.description && (
+                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">{product.description}</p>
                 )}
 
                 <div className="flex items-center justify-between mt-3">

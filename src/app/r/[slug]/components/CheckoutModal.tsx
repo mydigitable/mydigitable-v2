@@ -6,6 +6,16 @@ import { X, Check, AlertTriangle, Utensils, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CartItem, Theme, DietaryPreferences, Restaurant } from "../types";
 
+function extractName(name: unknown): string {
+    if (!name) return '';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name !== null) {
+        const n = name as Record<string, string>;
+        return n.es || n.en || Object.values(n)[0] || '';
+    }
+    return '';
+}
+
 interface CheckoutModalProps {
     cart: CartItem[];
     theme: Theme;
@@ -52,7 +62,7 @@ export default function CheckoutModal({
                     table_number: tableNumber ? parseInt(tableNumber) : null,
                     order_type: tableNumber ? 'dine_in' : 'takeaway',
                     status: 'pending',
-                    customer_name: customerData.name,
+                    guest_name: customerData.name,
                     customer_phone: customerData.phone || null,
                     customer_email: customerData.email || null,
                     subtotal: total,
@@ -69,7 +79,7 @@ export default function CheckoutModal({
             const orderItems = cart.map(item => ({
                 order_id: (order as Record<string, unknown>).id as string,
                 product_id: item.product.id,
-                product_name: item.product.name_es,
+                product_name: extractName(item.product.name),
                 quantity: item.quantity,
                 unit_price: item.product.price,
                 subtotal: item.product.price * item.quantity,
@@ -144,7 +154,7 @@ export default function CheckoutModal({
                                     {cart.map((item) => (
                                         <div key={item.product.id} className="flex justify-between">
                                             <span className={theme.text}>
-                                                {item.quantity}x {item.product.name_es}
+                                                {item.quantity}x {extractName(item.product.name)}
                                             </span>
                                             <span className={`font-bold ${theme.text}`}>
                                                 €{(item.product.price * item.quantity).toFixed(2)}

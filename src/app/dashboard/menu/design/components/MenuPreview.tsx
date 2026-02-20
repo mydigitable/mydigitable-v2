@@ -52,8 +52,8 @@ export function MenuPreview({
     restaurant: { name?: string; business_name?: string }
     menus: Array<{
         categories?: Array<{
-            name?: unknown; name_es?: string
-            products?: Array<{ id?: string; name?: unknown; name_es?: string; description?: unknown; description_es?: string; price?: number; image_url?: string }>
+            name?: unknown
+            products?: Array<{ id?: string; name?: unknown; description?: unknown; price?: number; image_url?: string }>
         }>
     }>
     config: RestaurantDesignConfig
@@ -97,13 +97,13 @@ export function MenuPreview({
         const cats: string[] = []
         for (const menu of menus) {
             for (const cat of (menu.categories || [])) {
-                const cn = extractName(cat.name) || cat.name_es || ''
+                const cn = extractName(cat.name) || ''
                 if (cn && !cats.includes(cn)) cats.push(cn)
                 for (const p of (cat.products || [])) {
                     prods.push({
                         id: p.id || String(Math.random()),
-                        name: extractName(p.name) || p.name_es || 'Producto',
-                        description: extractDesc(p.description) || p.description_es || '',
+                        name: extractName(p.name) || 'Producto',
+                        description: extractDesc(p.description) || '',
                         price: p.price || 0,
                         image_url: p.image_url || undefined,
                     })

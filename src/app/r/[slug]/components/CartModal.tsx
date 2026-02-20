@@ -6,6 +6,16 @@ import { X, Plus, Minus, AlertTriangle } from "lucide-react";
 import type { CartItem, Theme, DietaryPreferences } from "../types";
 import { allergensList } from "../types";
 
+function extractName(name: unknown): string {
+    if (!name) return '';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name !== null) {
+        const n = name as Record<string, string>;
+        return n.es || n.en || Object.values(n)[0] || '';
+    }
+    return '';
+}
+
 interface CartModalProps {
     cart: CartItem[];
     theme: Theme;
@@ -62,7 +72,7 @@ export default function CartModal({
                                     />
                                 )}
                                 <div className="flex-1">
-                                    <h4 className={`font-bold ${theme.text}`}>{item.product.name_es}</h4>
+                                    <h4 className={`font-bold ${theme.text}`}>{extractName(item.product.name)}</h4>
                                     <span className={theme.primaryText}>€{(item.product.price * item.quantity).toFixed(2)}</span>
                                 </div>
                                 <div className="flex items-center gap-2">

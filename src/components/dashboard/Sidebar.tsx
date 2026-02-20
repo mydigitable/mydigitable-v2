@@ -178,7 +178,7 @@ export function Sidebar({
         return item
     })
 
-    const isPro = restaurant?.subscription_plan === 'pro' || restaurant?.subscription_plan === 'enterprise'
+    const isPro = restaurant?.plan_tier === 'pro' || restaurant?.plan_tier === 'enterprise'
 
     return (
         <>
@@ -251,7 +251,7 @@ export function Sidebar({
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="font-bold text-sm text-slate-900 truncate">{restaurant.name}</p>
-                                <p className="text-xs text-slate-400 capitalize">{restaurant.subscription_plan || 'basic'}</p>
+                                <p className="text-xs text-slate-400 capitalize">{restaurant.plan_tier || 'basic'}</p>
                             </div>
                             <ChevronDown size={16} className="text-slate-400 flex-shrink-0" />
                         </div>
@@ -290,7 +290,7 @@ export function Sidebar({
                 </nav>
 
                 {/* Upgrade CTA - Only when expanded */}
-                {restaurant?.subscription_plan === 'basic' && !isCollapsed && (
+                {restaurant?.plan_tier === 'basic' && !isCollapsed && (
                     <div className="px-3 py-3 border-t border-slate-100">
                         <div className="p-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl">
                             <div className="flex items-center gap-2 mb-2">

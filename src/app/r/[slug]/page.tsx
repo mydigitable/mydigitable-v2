@@ -222,7 +222,7 @@ export default async function PublicMenuPage({ params }: PageProps) {
 
             categories.push({
                 id: cat.id,
-                name_es: extractName(cat.name),
+                name: extractName(cat.name),
                 icon: cat.icon || null,
                 sort_order: cat.display_order ?? 0,
             });
@@ -234,8 +234,8 @@ export default async function PublicMenuPage({ params }: PageProps) {
 
                 products.push({
                     id: p.id,
-                    name_es: extractName(p.name),
-                    description_es: extractDescription(p.description),
+                    name: extractName(p.name),
+                    description: extractDescription(p.description),
                     price: p.price ?? 0,
                     image_url: p.image_url || null,
                     allergens: p.allergens || [],

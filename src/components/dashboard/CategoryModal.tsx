@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { X, Check, Loader2, UploadCloud, Trash2, ChevronRight, Utensils, Pizza, Beef, Fish, Sandwich, Soup, Salad, Cake, IceCream, Coffee, Beer, Wine, Carrot, Grape, Flame, Sparkles, Leaf, Croissant, BookOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { extractName } from "@/lib/utils";
 
 // --- CONSTANTS ---
 const IconMap: { [key: string]: any } = {
@@ -30,9 +31,9 @@ const CATEGORY_PRESETS = [
 interface Category {
     id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     name_en: string | null;
-    description_es: string | null;
+    description: string | Record<string, string> | null;
     icon: string | null;
     image_url: string | null;
     sort_order: number;
@@ -57,8 +58,8 @@ export function CategoryModal({
     onSave: (data: Partial<Category> & { menu_ids?: string[] }) => void;
     onClose: () => void;
 }) {
-    const [nameEs, setNameEs] = useState(category?.name_es || '');
-    const [description, setDescription] = useState(category?.description_es || '');
+    const [nameEs, setNameEs] = useState(extractName(category?.name) || '');
+    const [description, setDescription] = useState(extractName(category?.description) || '');
     const [selectedIcon, setSelectedIcon] = useState(category?.icon && IconMap[category.icon] ? category.icon : '');
     const [imageUrl, setImageUrl] = useState(category?.image_url || '');
     const [selectedMenuIds, setSelectedMenuIds] = useState<string[]>(
@@ -104,13 +105,13 @@ export function CategoryModal({
             const filePath = `categories/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
-                .from('images')
+                .from('product-images')
                 .upload(filePath, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage
-                .from('images')
+                .from('product-images')
                 .getPublicUrl(filePath);
 
             setImageUrl(publicUrl);
@@ -129,8 +130,8 @@ export function CategoryModal({
         }
         setSaving(true);
         await onSave({
-            name_es: nameEs,
-            description_es: description,
+            name: { es: nameEs },
+            description: description ? { es: description } : null,
             icon: selectedIcon || null,
             image_url: imageUrl,
             menu_ids: selectedMenuIds,
@@ -214,13 +215,13 @@ export function CategoryModal({
                                                 key={menu.id}
                                                 onClick={() => toggleMenu(menu.id)}
                                                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all text-left ${selectedMenuIds.includes(menu.id)
-                                                        ? 'border-primary bg-primary/5'
-                                                        : 'border-slate-100 hover:border-slate-200'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-slate-100 hover:border-slate-200'
                                                     }`}
                                             >
                                                 <div className={`w-5 h-5 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors ${selectedMenuIds.includes(menu.id)
-                                                        ? 'bg-primary border-primary'
-                                                        : 'border-slate-300'
+                                                    ? 'bg-primary border-primary'
+                                                    : 'border-slate-300'
                                                     }`}>
                                                     {selectedMenuIds.includes(menu.id) && (
                                                         <Check size={12} className="text-white" />

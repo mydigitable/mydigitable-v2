@@ -191,10 +191,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         thisMonth.setHours(0, 0, 0, 0);
 
         const starterCount = activeRestaurants.filter(r =>
-            r.subscription_plan === 'starter' || !r.subscription_plan
+            r.plan_tier === 'starter' || !r.plan_tier
         ).length;
-        const growthCount = activeRestaurants.filter(r => r.subscription_plan === 'growth').length;
-        const scaleCount = activeRestaurants.filter(r => r.subscription_plan === 'scale').length;
+        const growthCount = activeRestaurants.filter(r => r.plan_tier === 'growth').length;
+        const scaleCount = activeRestaurants.filter(r => r.plan_tier === 'scale').length;
 
         const mrr = (growthCount * 39) + (scaleCount * 89);
 
@@ -313,7 +313,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         // Update restaurant
         const { error: restError } = await supabase
             .from('restaurants')
-            .update({ subscription_plan: plan })
+            .update({ plan_tier: plan })
             .eq('id', restaurantId);
 
         if (restError) {
@@ -333,7 +333,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
         set(state => ({
             restaurants: state.restaurants.map(r =>
-                r.id === restaurantId ? { ...r, subscription_plan: plan as any } : r
+                r.id === restaurantId ? { ...r, plan_tier: plan as any } : r
             )
         }));
         return true;

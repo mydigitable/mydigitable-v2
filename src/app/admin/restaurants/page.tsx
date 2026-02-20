@@ -27,7 +27,7 @@ interface Restaurant {
     slug: string;
     email: string | null;
     phone: string | null;
-    subscription_plan: string;
+    plan_tier: string;
     is_active: boolean;
     created_at: string;
     owner_id: string;
@@ -90,7 +90,7 @@ export default function AdminRestaurantsPage() {
         if (filterStatus === "inactive" && r.is_active) return false;
 
         // Plan filter
-        const plan = r.subscription_plan || "starter";
+        const plan = r.plan_tier || "starter";
         if (filterPlan !== "all" && plan !== filterPlan) return false;
 
         return true;
@@ -187,13 +187,13 @@ export default function AdminRestaurantsPage() {
                 </div>
                 <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
                     <p className="text-2xl font-bold text-blue-400">
-                        {restaurants.filter(r => r.subscription_plan === "basic").length}
+                        {restaurants.filter(r => r.plan_tier === "basic").length}
                     </p>
                     <p className="text-sm text-slate-400">Plan Basic</p>
                 </div>
                 <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
                     <p className="text-2xl font-bold text-indigo-400">
-                        {restaurants.filter(r => r.subscription_plan === "pro").length}
+                        {restaurants.filter(r => r.plan_tier === "pro").length}
                     </p>
                     <p className="text-sm text-slate-400">Plan Pro</p>
                 </div>
@@ -257,7 +257,7 @@ export default function AdminRestaurantsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {getPlanBadge(restaurant.subscription_plan)}
+                                            {getPlanBadge(restaurant.plan_tier)}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`

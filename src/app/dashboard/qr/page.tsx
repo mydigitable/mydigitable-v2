@@ -27,7 +27,7 @@ interface Table {
     id: string;
     table_number: number;
     name: string | null;
-    qr_code_url: string | null;
+    qr_slug: string | null;
 }
 
 interface QRSettings {
@@ -73,7 +73,7 @@ export default function QRPage() {
 
             const { data: tablesData } = await supabase
                 .from("tables")
-                .select("id, table_number, name, qr_code_url")
+                .select("id, table_number, name, qr_slug")
                 .eq("restaurant_id", restaurantData.id)
                 .order("table_number");
 
@@ -164,8 +164,8 @@ export default function QRPage() {
                     <button
                         onClick={() => setShowSettings(!showSettings)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${showSettings
-                                ? 'bg-primary text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                     >
                         <Palette size={16} />
@@ -362,8 +362,8 @@ export default function QRPage() {
                                 key={table.id}
                                 layout
                                 className={`relative bg-white rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${selectedTables.includes(table.id)
-                                        ? 'border-primary shadow-lg shadow-primary/10'
-                                        : 'border-slate-100 hover:border-slate-200'
+                                    ? 'border-primary shadow-lg shadow-primary/10'
+                                    : 'border-slate-100 hover:border-slate-200'
                                     }`}
                                 onClick={() => toggleTableSelection(table.id)}
                             >

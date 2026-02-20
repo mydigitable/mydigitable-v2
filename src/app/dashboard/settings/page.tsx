@@ -42,7 +42,7 @@ interface Restaurant {
     secondary_color: string;
     social_instagram: string;
     social_facebook: string;
-    subscription_plan: string;
+    plan_tier: string;
 }
 
 const settingsLinks = [
@@ -476,10 +476,10 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <p className="font-bold text-slate-900">Plan Actual</p>
-                                <p className="text-sm text-primary font-bold capitalize">{restaurant?.subscription_plan || 'Basic'}</p>
+                                <p className="text-sm text-primary font-bold capitalize">{restaurant?.plan_tier || 'Basic'}</p>
                             </div>
                         </div>
-                        {restaurant?.subscription_plan === 'basic' && (
+                        {restaurant?.plan_tier === 'basic' && (
                             <Link
                                 href="/dashboard/settings/billing"
                                 className="block text-center py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm transition-colors"

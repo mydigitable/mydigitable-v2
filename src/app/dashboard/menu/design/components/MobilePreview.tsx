@@ -38,7 +38,6 @@ interface MobilePreviewProps {
         categories?: Array<{
             id?: string
             name?: unknown
-            name_es?: string
             layout_type?: string
             grid_columns?: number
             show_images?: boolean
@@ -47,9 +46,7 @@ interface MobilePreviewProps {
             products?: Array<{
                 id?: string
                 name?: unknown
-                name_es?: string
                 description?: unknown
-                description_es?: string
                 price?: number
                 image_url?: string
                 is_featured?: boolean
@@ -284,7 +281,7 @@ export function MobilePreview({
                             </button>
 
                             {(menus.find(m => m.id === activeMenuTab) || menus[0])?.categories?.slice(0, 5).map(cat => {
-                                const catName = extractName(cat.name) || cat.name_es || 'Categoría'
+                                const catName = extractName(cat.name) || 'Categoría'
                                 return (
                                     <button
                                         key={cat.id}
@@ -347,12 +344,12 @@ export function MobilePreview({
 
                                             <div className="p-4">
                                                 <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text)', fontFamily: `'${headingFont}', serif` }}>
-                                                    {extractName(product.name) || product.name_es || 'Producto'}
+                                                    {extractName(product.name) || 'Producto'}
                                                 </h3>
 
                                                 {config.show_descriptions && (
                                                     <p className="text-sm mb-3 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>
-                                                        {extractDesc(product.description) || product.description_es || ''}
+                                                        {extractDesc(product.description) || ''}
                                                     </p>
                                                 )}
 
@@ -445,7 +442,7 @@ function CategorySection({ category, config, headingFont, onSelectProduct }: {
     const catShowImages = category.show_images !== undefined ? category.show_images : config.show_images
     const catShowPrices = category.show_prices !== undefined ? category.show_prices : config.show_prices
     const catShowDescs = category.show_descriptions !== undefined ? category.show_descriptions : config.show_descriptions
-    const catName = extractName(category.name) || category.name_es || 'Categoría'
+    const catName = extractName(category.name) || 'Categoría'
 
     if (products.length === 0) return null
 
@@ -498,8 +495,8 @@ function ProductCardGrid({ product, config, headingFont, onClick }: {
     headingFont: string
     onClick: () => void
 }) {
-    const pName = extractName(product.name) || product.name_es || 'Producto'
-    const pDesc = extractDesc(product.description) || product.description_es || ''
+    const pName = extractName(product.name) || 'Producto'
+    const pDesc = extractDesc(product.description) || ''
 
     return (
         <button
@@ -564,8 +561,8 @@ function ProductCardList({ product, config, headingFont, onClick }: {
     headingFont: string
     onClick: () => void
 }) {
-    const pName = extractName(product.name) || product.name_es || 'Producto'
-    const pDesc = extractDesc(product.description) || product.description_es || ''
+    const pName = extractName(product.name) || 'Producto'
+    const pDesc = extractDesc(product.description) || ''
 
     return (
         <button

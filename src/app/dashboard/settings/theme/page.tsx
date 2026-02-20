@@ -241,7 +241,7 @@ export default function ThemesPage() {
                 setCurrentThemeId(restaurantData.theme_id || 'classic');
                 setPreviewThemeId(restaurantData.theme_id || 'classic');
                 setCustomCSS(restaurantData.custom_css || '');
-                setIsPro(restaurantData.subscription_plan === 'pro' || restaurantData.subscription_plan === 'enterprise');
+                setIsPro(restaurantData.plan_tier === 'pro' || restaurantData.plan_tier === 'enterprise');
                 setHasCustomTheme(restaurantData.custom_theme_enabled || false);
             }
         } catch (err) {

@@ -67,19 +67,19 @@ export default function AdminAnalyticsPage() {
             // Load restaurants
             const { data: restaurants } = await supabase
                 .from("restaurants")
-                .select("id, subscription_plan, is_active, created_at, cancelled_at");
+                .select("id, plan_tier, is_active, created_at");
 
             const now = new Date();
             const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
             const activeRestaurants = restaurants?.filter(r => r.is_active) || [];
-            const starterCount = activeRestaurants.filter(r => r.subscription_plan === "starter" || !r.subscription_plan).length;
-            const basicCount = activeRestaurants.filter(r => r.subscription_plan === "basic").length;
-            const proCount = activeRestaurants.filter(r => r.subscription_plan === "pro").length;
+            const starterCount = activeRestaurants.filter(r => r.plan_tier === "starter" || !r.plan_tier).length;
+            const basicCount = activeRestaurants.filter(r => r.plan_tier === "basic").length;
+            const proCount = activeRestaurants.filter(r => r.plan_tier === "pro").length;
 
             const newThisMonth = restaurants?.filter(r => new Date(r.created_at) >= thisMonth).length || 0;
-            const churnedThisMonth = restaurants?.filter(r => r.cancelled_at && new Date(r.cancelled_at) >= thisMonth).length || 0;
+            const churnedThisMonth = 0; // TODO: implement when churn tracking column exists
 
             const mrr = (basicCount * 40) + (proCount * 90);
             const conversionRate = restaurants?.length ? ((basicCount + proCount) / restaurants.length) * 100 : 0;

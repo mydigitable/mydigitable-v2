@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createProductPro, updateProductPro } from '@/app/actions/products'
 import { createClient } from '@/lib/supabase/client'
+import { extractName } from '@/lib/utils'
 import { Plus, Minus, Trash2, Sparkles, Upload, X, Search } from 'lucide-react'
 
 // ============================================
@@ -11,10 +12,8 @@ import { Plus, Minus, Trash2, Sparkles, Upload, X, Search } from 'lucide-react'
 interface ProductData {
     id?: string
     category_id: string
-    name?: any
-    name_es?: string
-    description?: any
-    description_es?: string | null
+    name?: string | Record<string, string>
+    description?: string | Record<string, string> | null
     price: number
     image_url?: string | null
     allergens?: string[] | null
@@ -28,8 +27,7 @@ interface ProductData {
 
 interface CategoryData {
     id: string
-    name_es?: string
-    name?: any
+    name?: string | Record<string, string>
 }
 
 interface Props {
@@ -165,15 +163,7 @@ interface ExtraOption { nombre: string; precio: number }
 interface ExtraGroup { grupo: string; max_selecciones: number; opciones: ExtraOption[] }
 interface ModifierGroup { nombre: string; tipo: 'radio' | 'checkbox'; obligatorio: boolean; opciones: string[] }
 
-// ============================================
-// Helper to extract name from JSONB or string
-// ============================================
-function extractName(name: any): string {
-    if (!name) return ''
-    if (typeof name === 'string') return name
-    if (typeof name === 'object' && name.es) return name.es
-    return String(name)
-}
+// (extractName imported from @/lib/utils)
 
 // ============================================
 // Main Component
@@ -201,9 +191,9 @@ export function CreateProductModalPro({
     const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
         product?.category_id ? [product.category_id] : categoryId ? [categoryId] : []
     )
-    const [nameEs, setNameEs] = useState(extractName(product?.name) || product?.name_es || '')
+    const [nameEs, setNameEs] = useState(extractName(product?.name) || '')
     const [description, setDescription] = useState(
-        (product?.description?.es || product?.description_es || '')
+        extractName(product?.description) || ''
     )
     const [price, setPrice] = useState<number>(product?.price || 0)
     const [imageUrl, setImageUrl] = useState<string | null>(product?.image_url || null)
@@ -237,7 +227,7 @@ export function CreateProductModalPro({
     // Get category names for display
     const selectedCategoryNames = selectedCategoryIds.map(id => {
         const cat = categories.find(c => c.id === id)
-        return cat?.name_es || extractName(cat?.name) || ''
+        return extractName(cat?.name) || ''
     }).filter(Boolean)
     const selectedCategoryName = selectedCategoryNames[0] || categoryName || ''
 
@@ -484,7 +474,7 @@ export function CreateProductModalPro({
     const availableForRecommendation = allProducts.filter(p => p.id !== product?.id)
     const filteredRecommendations = recSearchQuery
         ? availableForRecommendation.filter(p => {
-            const name = extractName(p.name) || p.name_es || ''
+            const name = extractName(p.name) || ''
             return name.toLowerCase().includes(recSearchQuery.toLowerCase())
         })
         : availableForRecommendation
@@ -492,8 +482,7 @@ export function CreateProductModalPro({
     // Group recommendations by category
     const recommendationsByCategory = filteredRecommendations.reduce((acc, p) => {
         const catId = p.category_id
-        const catName = categories.find(c => c.id === catId)?.name_es
-            || extractName(categories.find(c => c.id === catId)?.name)
+        const catName = extractName(categories.find(c => c.id === catId)?.name)
             || 'Sin categoría'
         if (!acc[catName]) acc[catName] = []
         acc[catName].push(p)
@@ -524,8 +513,8 @@ export function CreateProductModalPro({
                 .map(m => ({ ...m, opciones: m.opciones.filter(o => o.trim()) }))
 
             const formData = {
-                name_es: nameEs,
-                description_es: description || null,
+                name: nameEs,
+                description: description || null,
                 price,
                 image_url: imageUrl,
                 allergens: allergens.length > 0 ? allergens : null,
@@ -626,7 +615,7 @@ export function CreateProductModalPro({
                                     </label>
                                     <div className="flex flex-wrap gap-2">
                                         {categories.map(cat => {
-                                            const catName = cat.name_es || extractName(cat.name)
+                                            const catName = extractName(cat.name)
                                             const isSelected = selectedCategoryIds.includes(cat.id)
                                             return (
                                                 <button
@@ -886,7 +875,7 @@ export function CreateProductModalPro({
                                                             {catName}
                                                         </p>
                                                         {prods.map(p => {
-                                                            const pName = extractName(p.name) || p.name_es || 'Sin nombre'
+                                                            const pName = extractName(p.name) || 'Sin nombre'
                                                             const isSelected = recommendedProductIds.includes(p.id!)
                                                             return (
                                                                 <label
@@ -1123,7 +1112,7 @@ export function CreateProductModalPro({
                                         <div className="flex flex-wrap gap-1.5">
                                             {recommendedProductIds.map(id => {
                                                 const p = allProducts.find(x => x.id === id)
-                                                const pName = p ? (extractName(p.name) || p.name_es || 'Producto') : 'Producto'
+                                                const pName = p ? (extractName(p.name) || 'Producto') : 'Producto'
                                                 return <span key={id} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs">{pName}</span>
                                             })}
                                         </div>

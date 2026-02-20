@@ -7,9 +7,9 @@ interface Product {
     id: string;
     category_id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     name_en: string | null;
-    description_es: string | null;
+    description: string | Record<string, string> | null;
     price: number;
     image_url: string | null;
     is_available: boolean;
@@ -22,7 +22,7 @@ interface Product {
 interface Category {
     id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     icon: string;
     image_url: string | null;
     sort_order: number;
@@ -103,7 +103,7 @@ export function MenuProvider({ children }: { children: ReactNode }) {
             const sortedCategories: Category[] = (categoriesData || []).map((cat: any) => ({
                 id: cat.id,
                 restaurant_id: cat.restaurant_id,
-                name_es: extractName(cat.name),
+                name: extractName(cat.name),
                 icon: cat.icon || '',
                 image_url: cat.image_url || null,
                 sort_order: cat.sort_order ?? cat.display_order ?? 0,

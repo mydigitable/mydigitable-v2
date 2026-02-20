@@ -3,15 +3,7 @@
 import { useMemo } from 'react'
 import { ShoppingBag, Search, Star, Flame, Plus } from 'lucide-react'
 
-function extractName(value: unknown): string {
-    if (!value) return ''
-    if (typeof value === 'string') return value
-    if (typeof value === 'object' && value !== null) {
-        const obj = value as Record<string, unknown>
-        return (obj.es || obj.en || Object.values(obj).find(v => typeof v === 'string') || '') as string
-    }
-    return String(value)
-}
+import { extractName } from '@/lib/utils'
 
 interface NProduct { id: string; name: string; description: string; price: number; imageUrl: string | null; isFeatured: boolean; badge: string | null; isAvailable: boolean }
 interface NCategory { id: string; name: string; products: NProduct[]; layout_type?: string; grid_columns?: number; show_images?: boolean; show_prices?: boolean; show_descriptions?: boolean }
@@ -88,15 +80,15 @@ export function MenuMobilePreview({ restaurant, menus, categories: rawCats, desi
         const src = menus && menus.length > 0 ? menus.flatMap(m => ((m.categories || []) as Array<Record<string, unknown>>)) : (rawCats || []).filter((c: Record<string, unknown>) => c.is_active !== false)
         cats = (src as Array<Record<string, unknown>>).map(cat => ({
             id: String(cat.id || ''),
-            name: extractName(cat.name) || String(cat.name_es || '') || 'Categoría',
+            name: extractName(cat.name) || 'Categoría',
             layout_type: (cat.layout_type as string) || undefined,
             grid_columns: cat.grid_columns != null ? Number(cat.grid_columns) : undefined,
             show_images: cat.show_images != null ? Boolean(cat.show_images) : undefined,
             show_prices: cat.show_prices != null ? Boolean(cat.show_prices) : undefined,
             show_descriptions: cat.show_descriptions != null ? Boolean(cat.show_descriptions) : undefined,
             products: ((cat.products || []) as Array<Record<string, unknown>>).filter(p => p.is_available !== false).map(p => ({
-                id: String(p.id || ''), name: extractName(p.name) || String(p.name_es || '') || 'Producto',
-                description: String(p.description_es || extractName(p.description) || ''),
+                id: String(p.id || ''), name: extractName(p.name) || 'Producto',
+                description: extractName(p.description) || '',
                 price: Number(p.price) || 0, imageUrl: (p.image_url as string) || null,
                 isFeatured: Boolean(p.is_featured), badge: (p.featured_badge as string) || null, isAvailable: true,
             }))

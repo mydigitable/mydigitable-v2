@@ -19,15 +19,16 @@ import {
     reorderCategories,
 } from "@/app/actions/menu";
 import { useMenu } from "@/contexts/MenuContext";
+import { extractName } from "@/lib/utils";
 
 // --- INTERFACES ---
 interface Product {
     id: string;
     category_id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string;
     name_en: string | null;
-    description_es: string | null;
+    description: string | null;
     price: number;
     image_url: string | null;
     allergens: string[] | null;
@@ -41,9 +42,9 @@ interface Product {
 interface Category {
     id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string;
     name_en: string | null;
-    description_es: string | null;
+    description: string | null;
     icon: string;
     image_url: string | null;
     sort_order: number;
@@ -59,13 +60,7 @@ interface MenuInfo {
     is_active: boolean;
 }
 
-// Helper to extract name from DB column (can be string or {es: string})
-function extractName(name: string | Record<string, string> | null | undefined): string {
-    if (!name) return "Sin nombre";
-    if (typeof name === "string") return name;
-    if (typeof name === "object" && name.es) return name.es;
-    return String(name);
-}
+// (extractName imported from @/lib/utils)
 
 export default function CategoriesPage() {
     // --- STATE ---
@@ -122,9 +117,9 @@ export default function CategoriesPage() {
             const mapped: Category[] = (categoriesData || []).map((cat: Record<string, unknown>) => ({
                 id: cat.id as string,
                 restaurant_id: cat.restaurant_id as string,
-                name_es: extractName(cat.name as string | Record<string, string>),
+                name: extractName(cat.name as string | Record<string, string>),
                 name_en: null,
-                description_es: (cat.description as string) || null,
+                description: extractName(cat.description as string | Record<string, string>) || null,
                 icon: (cat.icon as string) || '',
                 image_url: (cat.image_url as string) || null,
                 sort_order: (cat.sort_order as number) ?? (cat.display_order as number) ?? 0,
@@ -162,8 +157,8 @@ export default function CategoriesPage() {
             if (editingCategory) {
                 // Update existing category
                 const result = await updateCategory(editingCategory.id, {
-                    name: data.name_es || '',
-                    description: data.description_es || undefined,
+                    name: extractName(data.name) || '',
+                    description: extractName(data.description) || undefined,
                     is_visible: true,
                 });
 
@@ -177,8 +172,8 @@ export default function CategoriesPage() {
                     // No menu selected — create with null menu_id
                     const result = await createCategory({
                         menu_id: null,
-                        name: data.name_es || '',
-                        description: data.description_es || undefined,
+                        name: extractName(data.name) || '',
+                        description: extractName(data.description) || undefined,
                         is_visible: true,
                     });
 
@@ -191,8 +186,8 @@ export default function CategoriesPage() {
                     for (const menuId of menuIds) {
                         const result = await createCategory({
                             menu_id: menuId,
-                            name: data.name_es || '',
-                            description: data.description_es || undefined,
+                            name: extractName(data.name) || '',
+                            description: extractName(data.description) || undefined,
                             is_visible: true,
                         });
 
@@ -249,14 +244,14 @@ export default function CategoriesPage() {
     // --- HANDLERS: PRODUCTS (using server actions) ---
     const handleOpenProductModal = (categoryId: string, product: Product | null = null) => {
         // TODO: implement new ProductModal
-        console.log('ProductModal pendiente — categoryId:', categoryId, 'product:', product?.name_es);
+        console.log('ProductModal pendiente — categoryId:', categoryId, 'product:', product?.name);
     };
 
 
 
     // --- RENDER ---
     const filteredCategories = categories.filter(cat =>
-        cat.name_es.toLowerCase().includes(searchQuery.toLowerCase())
+        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (loading) {

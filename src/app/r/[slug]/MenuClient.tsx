@@ -32,6 +32,30 @@ import type {
 import { themes } from "./types";
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function extractName(name: unknown): string {
+    if (!name) return '';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name !== null) {
+        const n = name as Record<string, string>;
+        return n.es || n.en || Object.values(n)[0] || '';
+    }
+    return '';
+}
+
+function extractDesc(desc: unknown): string | null {
+    if (!desc) return null;
+    if (typeof desc === 'string') return desc;
+    if (typeof desc === 'object' && desc !== null) {
+        const d = desc as Record<string, string>;
+        return d.es || d.en || Object.values(d)[0] || null;
+    }
+    return null;
+}
+
+// ============================================================================
 // Convert DB colors to inline style helpers
 // ============================================================================
 
@@ -140,7 +164,7 @@ function ProductDetailModal({
                 {/* Header image */}
                 {product.image_url && (
                     <div className="relative h-48 flex-shrink-0">
-                        <img src={product.image_url} alt={product.name_es} className="w-full h-full object-cover" />
+                        <img src={product.image_url} alt={extractName(product.name)} className="w-full h-full object-cover" />
                         <button
                             onClick={onClose}
                             className="absolute top-3 right-3 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center"
@@ -153,7 +177,7 @@ function ProductDetailModal({
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-5">
                     <div className="flex justify-between items-start mb-2">
-                        <h2 className="text-xl font-bold flex-1">{product.name_es}</h2>
+                        <h2 className="text-xl font-bold flex-1">{extractName(product.name)}</h2>
                         {!product.image_url && (
                             <button onClick={onClose} className="p-1">
                                 <X size={18} />
@@ -161,9 +185,9 @@ function ProductDetailModal({
                         )}
                     </div>
 
-                    {product.description_es && (
+                    {extractDesc(product.description) && (
                         <p className="text-sm mb-4" style={useDB ? { color: c!.text_secondary } : undefined}>
-                            {product.description_es}
+                            {extractDesc(product.description)}
                         </p>
                     )}
 
@@ -398,8 +422,10 @@ export default function MenuClient({
         if (selectedCategory && product.category_id !== selectedCategory) return false;
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            return product.name_es.toLowerCase().includes(query) ||
-                product.description_es?.toLowerCase().includes(query);
+            const pName = extractName(product.name);
+            const pDesc = extractDesc(product.description);
+            return pName.toLowerCase().includes(query) ||
+                pDesc?.toLowerCase().includes(query) || false;
         }
         if (dietaryPrefs.isVegetarian && !product.dietary_tags?.includes('vegetarian') && !product.dietary_tags?.includes('vegan')) return false;
         if (dietaryPrefs.isVegan && !product.dietary_tags?.includes('vegan')) return false;
@@ -510,7 +536,7 @@ export default function MenuClient({
                                     }}
                                 >
                                     {cat.icon && <span>{cat.icon}</span>}
-                                    {cat.name_es}
+                                    {extractName(cat.name)}
                                 </button>
                             ))}
                         </div>
@@ -589,7 +615,7 @@ export default function MenuClient({
                                     style={{ fontFamily: fonts?.heading ? `'${fonts.heading}', serif` : undefined }}
                                 >
                                     {category.icon && <span>{category.icon}</span>}
-                                    {category.name_es}
+                                    {extractName(category.name)}
                                 </h2>
                                 <div className="space-y-3">
                                     {categoryProducts.map((product) => (
@@ -601,7 +627,7 @@ export default function MenuClient({
                                             <div className="flex">
                                                 {(config?.show_images !== false) && product.image_url && (
                                                     <div className="w-28 h-28 flex-shrink-0">
-                                                        <img src={product.image_url} alt={product.name_es} className="w-full h-full object-cover" />
+                                                        <img src={product.image_url} alt={extractName(product.name)} className="w-full h-full object-cover" />
                                                     </div>
                                                 )}
                                                 <div className="flex-1 p-3 flex flex-col justify-between">
@@ -610,16 +636,16 @@ export default function MenuClient({
                                                         onClick={() => hasExtras(product) ? setSelectedProduct(product) : undefined}
                                                     >
                                                         <div className="flex items-start gap-2 mb-1">
-                                                            <h3 className="font-bold flex-1">{product.name_es}</h3>
+                                                            <h3 className="font-bold flex-1">{extractName(product.name)}</h3>
                                                             <div className="flex gap-1">
                                                                 {product.dietary_tags?.includes('vegan') && <span title="Vegano">🌱</span>}
                                                                 {product.dietary_tags?.includes('vegetarian') && !product.dietary_tags?.includes('vegan') && <span title="Vegetariano">🥬</span>}
                                                                 {product.dietary_tags?.includes('gluten_free') && <span title="Sin gluten">🌾</span>}
                                                             </div>
                                                         </div>
-                                                        {(config?.show_descriptions !== false) && product.description_es && (
+                                                        {(config?.show_descriptions !== false) && extractDesc(product.description) && (
                                                             <p className="text-sm line-clamp-2" style={{ color: c.text_secondary }}>
-                                                                {product.description_es}
+                                                                {extractDesc(product.description)}
                                                             </p>
                                                         )}
                                                         {/* Show extras hint */}
@@ -812,7 +838,7 @@ export default function MenuClient({
                             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${selectedCategory === cat.id ? `${theme.primary} text-white` : `${theme.accent} ${theme.text}`}`}
                         >
                             {cat.icon && <span>{cat.icon}</span>}
-                            {cat.name_es}
+                            {extractName(cat.name)}
                         </button>
                     ))}
                 </div>
@@ -827,7 +853,7 @@ export default function MenuClient({
                         <div key={category.id} className="mb-6">
                             <h2 className={`font-bold text-lg ${theme.text} mb-3 flex items-center gap-2`}>
                                 {category.icon && <span>{category.icon}</span>}
-                                {category.name_es}
+                                {extractName(category.name)}
                             </h2>
                             <div className="space-y-3">
                                 {categoryProducts.map((product) => (

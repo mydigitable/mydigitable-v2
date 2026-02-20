@@ -41,7 +41,6 @@ interface DesignStudioProps {
         categories?: Array<{
             id?: string
             name?: unknown
-            name_es?: string
             layout_type?: string
             grid_columns?: number
             show_images?: boolean
@@ -50,9 +49,7 @@ interface DesignStudioProps {
             products?: Array<{
                 id?: string
                 name?: unknown
-                name_es?: string
                 description?: unknown
-                description_es?: string
                 price?: number
                 image_url?: string
                 is_featured?: boolean
@@ -606,7 +603,7 @@ function CategoriesSection({ menus, config, onToggleFeatured, onCategoryLayoutUp
         const category = menus.flatMap(m => m.categories || []).find(c => c.id === selectedCatId)
         if (!category) { setSelectedCatId(null); return null }
 
-        const catName = extractName(category.name) || category.name_es || 'Categoría'
+        const catName = extractName(category.name) || 'Categoría'
         const products = category.products || []
         const catLayout = category.layout_type || config.layout_type || 'grid'
         const catCols = category.grid_columns || config.grid_columns || 2
@@ -696,7 +693,7 @@ function CategoriesSection({ menus, config, onToggleFeatured, onCategoryLayoutUp
                         </label>
                         <div className="space-y-1 max-h-52 overflow-y-auto">
                             {products.map(p => {
-                                const pName = extractName(p.name) || p.name_es || 'Producto'
+                                const pName = extractName(p.name) || 'Producto'
                                 return (
                                     <div
                                         key={p.id}
@@ -741,7 +738,7 @@ function CategoriesSection({ menus, config, onToggleFeatured, onCategoryLayoutUp
                                 onClick={() => setSelectedCatId(cat.id || null)}
                                 className="w-full px-3 py-2.5 rounded-lg text-left text-xs transition-all flex items-center justify-between text-slate-700 hover:bg-slate-100"
                             >
-                                <span className="font-medium">{extractName(cat.name) || cat.name_es || 'Categoría'}</span>
+                                <span className="font-medium">{extractName(cat.name) || 'Categoría'}</span>
                                 <span className="flex items-center gap-2 text-[10px]">
                                     {featuredCount > 0 && (
                                         <span className="text-amber-500 flex items-center gap-0.5">

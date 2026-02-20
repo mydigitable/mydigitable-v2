@@ -264,9 +264,9 @@ export default function OnboardingPage() {
             for (let i = 0; i < state.categories.length; i++) {
                 const cat = state.categories[i];
                 if (!cat.name.trim()) continue;
-                const { data: catData } = await supabase.from("categories").insert({
+                const { data: catData } = await supabase.from("menu_categories").insert({
                     restaurant_id: restaurant.id,
-                    name_es: cat.name,
+                    name: { es: cat.name },
                     icon: cat.icon,
                     sort_order: i,
                     is_active: true,
@@ -279,8 +279,8 @@ export default function OnboardingPage() {
                         await supabase.from("products").insert({
                             restaurant_id: restaurant.id,
                             category_id: catData.id,
-                            name_es: prod.name,
-                            description_es: prod.description || null,
+                            name: { es: prod.name },
+                            description: prod.description ? { es: prod.description } : null,
                             price: parseFloat(prod.price) || 0,
                             sort_order: j,
                             is_available: true,

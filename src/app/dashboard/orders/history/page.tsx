@@ -23,7 +23,7 @@ interface Order {
     order_number: string;
     status: string;
     order_type: string;
-    customer_name: string | null;
+    guest_name: string | null;
     total: number;
     created_at: string;
     completed_at: string | null;
@@ -84,7 +84,7 @@ export default function OrdersHistoryPage() {
 
     const filteredOrders = orders.filter(o =>
         o.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        o.guest_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const paginatedOrders = filteredOrders.slice(
@@ -183,7 +183,7 @@ export default function OrdersHistoryPage() {
                                             <span className="font-bold text-slate-900">#{order.order_number}</span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600">
-                                            {order.customer_name || 'Cliente anónimo'}
+                                            {order.guest_name || 'Cliente anónimo'}
                                         </td>
                                         <td className="px-6 py-4 font-bold text-slate-900">
                                             {order.total?.toFixed(2)}€

@@ -28,7 +28,6 @@ interface SidebarProps {
         categories?: Array<{
             id?: string
             name?: unknown
-            name_es?: string
             layout_type?: string
             grid_columns?: number
             show_images?: boolean
@@ -37,7 +36,6 @@ interface SidebarProps {
             products?: Array<{
                 id?: string
                 name?: unknown
-                name_es?: string
                 is_featured?: boolean
                 featured_badge?: string
             }>
@@ -374,7 +372,7 @@ function CategoriesSection({ menus, config, selectedCategory, selectedProduct, o
             .flatMap(c => c.products || [])
             .find(p => p.id === selectedProduct)
 
-        const pName = product ? (extractName(product.name) || product.name_es || 'Producto') : 'Producto'
+        const pName = product ? (extractName(product.name) || 'Producto') : 'Producto'
 
         return (
             <div className="space-y-4">
@@ -435,7 +433,7 @@ function CategoriesSection({ menus, config, selectedCategory, selectedProduct, o
             .flatMap(m => m.categories || [])
             .find(c => c.id === selectedCategory)
 
-        const catName = category ? (extractName(category.name) || category.name_es || 'Categoría') : 'Categoría'
+        const catName = category ? (extractName(category.name) || 'Categoría') : 'Categoría'
         const products = category?.products || []
 
         return (
@@ -499,7 +497,7 @@ function CategoriesSection({ menus, config, selectedCategory, selectedProduct, o
                         <label className="block text-sm font-semibold text-slate-900 mb-3">Productos</label>
                         <div className="space-y-1">
                             {products.map(p => {
-                                const pName = extractName(p.name) || p.name_es || 'Producto'
+                                const pName = extractName(p.name) || 'Producto'
                                 return (
                                     <button
                                         key={p.id}
@@ -543,7 +541,7 @@ function CategoriesSection({ menus, config, selectedCategory, selectedProduct, o
                                 : 'text-slate-700 hover:bg-slate-100'
                                 }`}
                         >
-                            <span>{extractName(category.name) || category.name_es || 'Categoría'}</span>
+                            <span>{extractName(category.name) || 'Categoría'}</span>
                             <span className="text-xs text-slate-400 group-hover:text-slate-600">
                                 {category.products?.length || 0} productos
                             </span>

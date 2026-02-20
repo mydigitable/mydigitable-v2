@@ -28,7 +28,6 @@ interface DetailPanelProps {
         categories?: Array<{
             id?: string
             name?: unknown
-            name_es?: string
             layout_type?: string
             grid_columns?: number
             show_images?: boolean
@@ -37,7 +36,6 @@ interface DetailPanelProps {
             products?: Array<{
                 id?: string
                 name?: unknown
-                name_es?: string
                 is_featured?: boolean
                 featured_badge?: string
             }>
@@ -97,7 +95,7 @@ function CategoryDetailPanel({ categoryId, menus, config, onChange }: {
         .flatMap(m => m.categories || [])
         .find(c => c.id === categoryId)
 
-    const catName = category ? (extractName(category.name) || category.name_es || 'Categoría') : 'Categoría'
+    const catName = category ? (extractName(category.name) || 'Categoría') : 'Categoría'
     const productCount = category?.products?.length || 0
 
     // Local state for category-level overrides
@@ -247,7 +245,7 @@ function ProductDetailPanel({ productId, menus, config, onChange }: {
         .flatMap(c => c.products || [])
         .find(p => p.id === productId)
 
-    const pName = product ? (extractName(product.name) || product.name_es || 'Producto') : 'Producto'
+    const pName = product ? (extractName(product.name) || 'Producto') : 'Producto'
     const [isFeatured, setIsFeatured] = useState(product?.is_featured || false)
     const [badge, setBadge] = useState(product?.featured_badge || 'Popular')
 

@@ -87,7 +87,6 @@ export interface MenuCategory {
     id: string
     menu_id: string
     name: string | Record<string, string>
-    name_es?: string
     slug?: string
     description?: string | Record<string, string>
     display_order: number
@@ -112,9 +111,7 @@ export interface Product {
     id: string
     category_id: string
     name: string | Record<string, string>
-    name_es?: string
     description?: string | Record<string, string>
-    description_es?: string
     price: number
     image_url?: string
     display_order: number

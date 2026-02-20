@@ -75,8 +75,8 @@ export interface ProductExtra {
 
 export interface Product {
     id: string;
-    name_es: string;
-    description_es: string | null;
+    name: string | Record<string, string>;
+    description: string | Record<string, string> | null;
     price: number;
     image_url: string | null;
     allergens: string[];
@@ -88,7 +88,7 @@ export interface Product {
 
 export interface Category {
     id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     icon: string | null;
     sort_order: number;
 }

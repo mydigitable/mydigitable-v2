@@ -4,6 +4,26 @@ import { motion } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
 import type { Product, Theme } from "../types";
 
+function extractName(name: unknown): string {
+    if (!name) return '';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name !== null) {
+        const n = name as Record<string, string>;
+        return n.es || n.en || Object.values(n)[0] || '';
+    }
+    return '';
+}
+
+function extractDesc(desc: unknown): string | null {
+    if (!desc) return null;
+    if (typeof desc === 'string') return desc;
+    if (typeof desc === 'object' && desc !== null) {
+        const d = desc as Record<string, string>;
+        return d.es || d.en || Object.values(d)[0] || null;
+    }
+    return null;
+}
+
 interface ProductCardProps {
     product: Product;
     theme: Theme;
@@ -29,7 +49,7 @@ export default function ProductCard({
                     <div className="w-28 h-28 flex-shrink-0">
                         <img
                             src={product.image_url}
-                            alt={product.name_es}
+                            alt={extractName(product.name)}
                             className="w-full h-full object-cover"
                         />
                     </div>
@@ -37,7 +57,7 @@ export default function ProductCard({
                 <div className="flex-1 p-3 flex flex-col justify-between">
                     <div onClick={onSelect} className="cursor-pointer">
                         <div className="flex items-start gap-2 mb-1">
-                            <h3 className={`font-bold ${theme.text} flex-1`}>{product.name_es}</h3>
+                            <h3 className={`font-bold ${theme.text} flex-1`}>{extractName(product.name)}</h3>
                             {/* Dietary icons */}
                             <div className="flex gap-1">
                                 {product.dietary_tags?.includes('vegan') && <span title="Vegano">🌱</span>}
@@ -45,9 +65,9 @@ export default function ProductCard({
                                 {product.dietary_tags?.includes('gluten_free') && <span title="Sin gluten">🌾</span>}
                             </div>
                         </div>
-                        {product.description_es && (
+                        {extractDesc(product.description) && (
                             <p className={`text-sm ${theme.textSecondary} line-clamp-2`}>
-                                {product.description_es}
+                                {extractDesc(product.description)}
                             </p>
                         )}
                     </div>

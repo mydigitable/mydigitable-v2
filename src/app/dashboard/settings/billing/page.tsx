@@ -118,7 +118,7 @@ export default function BillingPage() {
 
             if (restaurantData) {
                 setRestaurant(restaurantData);
-                setCurrentPlan(restaurantData.subscription_plan || 'basic');
+                setCurrentPlan(restaurantData.plan_tier || 'basic');
             }
         } catch (err) {
             console.error("Error loading data:", err);

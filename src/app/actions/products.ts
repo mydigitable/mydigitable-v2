@@ -25,8 +25,8 @@ import { revalidatePath } from 'next/cache'
 // ============================================
 
 export async function createProductPro(data: {
-    name_es: string
-    description_es?: string | null
+    name: string
+    description?: string | null
     category_id: string
     price: number
     image_url?: string | null
@@ -86,7 +86,7 @@ export async function createProductPro(data: {
         const productData: Record<string, unknown> = {
             restaurant_id: restaurantId,
             category_id: data.category_id,
-            name: { es: data.name_es },
+            name: { es: data.name },
             price: data.price,
             image_url: data.image_url || null,
             is_available: true,
@@ -95,8 +95,8 @@ export async function createProductPro(data: {
         }
 
         // Add description as JSONB if provided
-        if (data.description_es) {
-            productData.description = { es: data.description_es }
+        if (data.description) {
+            productData.description = { es: data.description }
         }
 
         // Add optional fields
@@ -137,8 +137,8 @@ export async function createProductPro(data: {
 export async function updateProductPro(
     productId: string,
     data: {
-        name_es: string
-        description_es?: string | null
+        name: string
+        description?: string | null
         category_id: string
         price: number
         image_url?: string | null
@@ -171,13 +171,13 @@ export async function updateProductPro(
         // Build update data
         const updateData: Record<string, unknown> = {
             category_id: data.category_id,
-            name: { es: data.name_es },
+            name: { es: data.name },
             price: data.price,
             image_url: data.image_url || null,
             updated_at: new Date().toISOString(),
         }
 
-        updateData.description = data.description_es ? { es: data.description_es } : null
+        updateData.description = data.description ? { es: data.description } : null
         if (data.allergens?.length) updateData.allergens = data.allergens
         else updateData.allergens = null
         if (data.dietary_tags?.length) updateData.dietary_tags = data.dietary_tags
