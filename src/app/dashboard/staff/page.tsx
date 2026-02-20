@@ -75,7 +75,7 @@ export default function StaffPage() {
             setRestaurant(restaurantData);
 
             const { data: staffData } = await supabase
-                .from("staff")
+                .from("staff_members")
                 .select("*")
                 .eq("restaurant_id", restaurantData.id)
                 .order("created_at");
@@ -95,7 +95,7 @@ export default function StaffPage() {
         try {
             if (editingMember) {
                 await supabase
-                    .from("staff")
+                    .from("staff_members")
                     .update({
                         name: data.name,
                         email: data.email,
@@ -106,7 +106,7 @@ export default function StaffPage() {
                     .eq("id", editingMember.id);
             } else {
                 await supabase
-                    .from("staff")
+                    .from("staff_members")
                     .insert({
                         restaurant_id: restaurant.id,
                         name: data.name,
@@ -130,7 +130,7 @@ export default function StaffPage() {
 
     const toggleMemberActive = async (memberId: string, isActive: boolean) => {
         await supabase
-            .from("staff")
+            .from("staff_members")
             .update({ is_active: isActive })
             .eq("id", memberId);
         loadStaff();
@@ -138,7 +138,7 @@ export default function StaffPage() {
 
     const deleteMember = async (memberId: string) => {
         if (!confirm('¿Eliminar este miembro del equipo?')) return;
-        await supabase.from("staff").delete().eq("id", memberId);
+        await supabase.from("staff_members").delete().eq("id", memberId);
         loadStaff();
     };
 
