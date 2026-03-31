@@ -57,9 +57,13 @@ export default function KitchenPage() {
 
     useEffect(() => {
         loadOrders();
-        const cleanup = setupRealtimeSubscription();
-        return cleanup;
     }, []);
+
+    useEffect(() => {
+        if (!restaurant) return;
+        const cleanup = setupRealtimeSubscription(restaurant.id);
+        return cleanup;
+    }, [restaurant?.id]);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -115,13 +119,14 @@ export default function KitchenPage() {
         }
     };
 
-    const setupRealtimeSubscription = () => {
+    const setupRealtimeSubscription = (restaurantId: string) => {
         const channel = supabase
-            .channel('kitchen-orders')
+            .channel(`kitchen-orders-${restaurantId}`)
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
                 table: 'orders',
+                filter: `restaurant_id=eq.${restaurantId}`,
             }, (payload) => {
                 if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                     loadOrders();
@@ -138,8 +143,20 @@ export default function KitchenPage() {
     };
 
     const playNotificationSound = () => {
-        const audio = new Audio('/sounds/kitchen-bell.mp3');
-        audio.play().catch(() => { });
+        try {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(660, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.4);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.5, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.4);
+        } catch { }
     };
 
     const markAsReady = async (orderId: string) => {

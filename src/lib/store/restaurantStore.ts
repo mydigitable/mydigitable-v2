@@ -256,7 +256,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
         const supabase = createClient();
         const { data } = await supabase
-            .from('staff')
+            .from('staff_members')
             .select('*')
             .eq('restaurant_id', restaurant.id)
             .order('name');
@@ -604,7 +604,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
         const supabase = createClient();
         const { data: member, error } = await supabase
-            .from('staff')
+            .from('staff_members')
             .insert({ ...data, restaurant_id: restaurant.id })
             .select()
             .single();
@@ -616,7 +616,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
     updateStaff: async (id, data) => {
         const supabase = createClient();
-        const { error } = await supabase.from('staff').update(data).eq('id', id);
+        const { error } = await supabase.from('staff_members').update(data).eq('id', id);
         if (error) return false;
         set(state => ({ staff: state.staff.map(s => s.id === id ? { ...s, ...data } : s) }));
         return true;
@@ -624,7 +624,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
     deleteStaff: async (id) => {
         const supabase = createClient();
-        const { error } = await supabase.from('staff').delete().eq('id', id);
+        const { error } = await supabase.from('staff_members').delete().eq('id', id);
         if (error) return false;
         set(state => ({ staff: state.staff.filter(s => s.id !== id) }));
         return true;

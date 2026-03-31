@@ -90,8 +90,13 @@ export default function OrdersPage() {
 
     useEffect(() => {
         loadOrders();
-        setupRealtimeSubscription();
     }, []);
+
+    useEffect(() => {
+        if (!restaurant) return;
+        const cleanup = setupRealtimeSubscription(restaurant.id);
+        return cleanup;
+    }, [restaurant?.id]);
 
     const loadOrders = async () => {
         try {
@@ -125,13 +130,14 @@ export default function OrdersPage() {
         }
     };
 
-    const setupRealtimeSubscription = () => {
+    const setupRealtimeSubscription = (restaurantId: string) => {
         const channel = supabase
-            .channel('orders-realtime')
+            .channel(`orders-realtime-${restaurantId}`)
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
                 table: 'orders',
+                filter: `restaurant_id=eq.${restaurantId}`,
             }, (payload) => {
                 if (payload.eventType === 'INSERT') {
                     // Play sound for new order
@@ -149,8 +155,21 @@ export default function OrdersPage() {
     };
 
     const playNotificationSound = () => {
-        const audio = new Audio('/sounds/new-order.mp3');
-        audio.play().catch(() => { });
+        try {
+            const ctx = new AudioContext();
+            [0, 150].forEach((delayMs) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.4, ctx.currentTime + delayMs / 1000);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delayMs / 1000 + 0.15);
+                osc.start(ctx.currentTime + delayMs / 1000);
+                osc.stop(ctx.currentTime + delayMs / 1000 + 0.15);
+            });
+        } catch { }
     };
 
     const updateOrderStatus = async (orderId: string, newStatus: string) => {

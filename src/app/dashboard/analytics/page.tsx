@@ -46,6 +46,7 @@ type Period = '7d' | '30d' | '90d';
 
 export default function AnalyticsPage() {
     const [metrics, setMetrics] = useState<DailyMetrics[]>([]);
+    const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState<Period>('7d');
     const [restaurant, setRestaurant] = useState<any>(null);
@@ -74,15 +75,49 @@ export default function AnalyticsPage() {
             const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - days);
+            const startDateStr = startDate.toISOString().split('T')[0];
 
-            const { data: metricsData } = await supabase
+            const metricsResult = await supabase
                 .from("daily_metrics")
                 .select("*")
                 .eq("restaurant_id", restaurantData.id)
-                .gte("date", startDate.toISOString().split('T')[0])
+                .gte("date", startDateStr)
                 .order("date", { ascending: true });
 
-            setMetrics(metricsData || []);
+            setMetrics(metricsResult.data || []);
+
+            // Top products: get order IDs first, then aggregate items
+            const { data: orderData } = await supabase
+                .from("orders")
+                .select("id")
+                .eq("restaurant_id", restaurantData.id)
+                .gte("created_at", `${startDateStr}T00:00:00`)
+                .not("status", "in", "(cancelled,canceled)");
+
+            const orderIds = (orderData || []).map((o: any) => o.id);
+
+            if (orderIds.length > 0) {
+                const { data: itemsData } = await supabase
+                    .from("order_items")
+                    .select("quantity, unit_price, subtotal, products(name)")
+                    .in("order_id", orderIds);
+
+                if (itemsData) {
+                    const aggregated = itemsData.reduce<Record<string, TopProduct>>((acc, item: any) => {
+                        const rawName = item.products?.name;
+                        const name = rawName && typeof rawName === 'object'
+                            ? (rawName.es || rawName.en || Object.values(rawName)[0] || 'Producto')
+                            : (rawName || 'Producto');
+                        if (!acc[name]) acc[name] = { name, quantity: 0, revenue: 0 };
+                        acc[name].quantity += item.quantity || 1;
+                        acc[name].revenue += item.subtotal ?? ((item.unit_price || 0) * (item.quantity || 1));
+                        return acc;
+                    }, {});
+                    setTopProducts(
+                        Object.values(aggregated).sort((a, b) => b.quantity - a.quantity).slice(0, 5)
+                    );
+                }
+            }
         } catch (err) {
             console.error("Error loading analytics:", err);
         } finally {
@@ -123,15 +158,6 @@ export default function AnalyticsPage() {
     const firstOrders = firstHalf.reduce((sum, d) => sum + (d.total_orders || 0), 0);
     const secondOrders = secondHalf.reduce((sum, d) => sum + (d.total_orders || 0), 0);
     const ordersChange = firstOrders > 0 ? ((secondOrders - firstOrders) / firstOrders) * 100 : 0;
-
-    // Mock top products
-    const topProducts: TopProduct[] = [
-        { name: "Hamburguesa Classic", quantity: 156, revenue: 2340 },
-        { name: "Pizza Margarita", quantity: 124, revenue: 1860 },
-        { name: "Coca-Cola", quantity: 312, revenue: 936 },
-        { name: "Ensalada César", quantity: 89, revenue: 1068 },
-        { name: "Tiramisú", quantity: 67, revenue: 469 },
-    ];
 
     // Chart data
     const maxRevenue = Math.max(...metrics.map(m => m.total_revenue || 0), 1);
@@ -353,24 +379,30 @@ export default function AnalyticsPage() {
                         </Link>
                     </div>
 
-                    <div className="space-y-4">
-                        {topProducts.map((product, i) => (
-                            <div key={i} className="flex items-center gap-4">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-amber-400 text-white' :
-                                        i === 1 ? 'bg-slate-300 text-slate-700' :
-                                            i === 2 ? 'bg-amber-700 text-white' :
-                                                'bg-slate-100 text-slate-500'
-                                    }`}>
-                                    {i + 1}
+                    {topProducts.length === 0 ? (
+                        <p className="text-sm text-slate-400 text-center py-6">
+                            Sin datos para el período seleccionado
+                        </p>
+                    ) : (
+                        <div className="space-y-4">
+                            {topProducts.map((product, i) => (
+                                <div key={i} className="flex items-center gap-4">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-amber-400 text-white' :
+                                            i === 1 ? 'bg-slate-300 text-slate-700' :
+                                                i === 2 ? 'bg-amber-700 text-white' :
+                                                    'bg-slate-100 text-slate-500'
+                                        }`}>
+                                        {i + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-slate-900 truncate">{product.name}</p>
+                                        <p className="text-xs text-slate-500">{product.quantity} vendidos</p>
+                                    </div>
+                                    <span className="font-bold text-slate-900">€{product.revenue.toFixed(2)}</span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-slate-900 truncate">{product.name}</p>
-                                    <p className="text-xs text-slate-500">{product.quantity} vendidos</p>
-                                </div>
-                                <span className="font-bold text-slate-900">€{product.revenue}</span>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Quick Stats */}

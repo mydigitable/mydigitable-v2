@@ -106,9 +106,13 @@ export default function WaiterCallsPage() {
 
     useEffect(() => {
         loadCalls();
-        const cleanup = setupRealtimeSubscription();
-        return cleanup;
     }, []);
+
+    useEffect(() => {
+        if (!restaurant) return;
+        const cleanup = setupRealtimeSubscription(restaurant.id);
+        return cleanup;
+    }, [restaurant?.id]);
 
     const loadCalls = async () => {
         try {
@@ -153,13 +157,14 @@ export default function WaiterCallsPage() {
         }
     };
 
-    const setupRealtimeSubscription = () => {
+    const setupRealtimeSubscription = (restaurantId: string) => {
         const channel = supabase
-            .channel('waiter-calls')
+            .channel(`waiter-calls-${restaurantId}`)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'waiter_calls',
+                filter: `restaurant_id=eq.${restaurantId}`,
             }, (payload) => {
                 loadCalls();
                 if (soundEnabled) {
@@ -174,11 +179,23 @@ export default function WaiterCallsPage() {
     };
 
     const playNotificationSound = (priority: string) => {
-        const soundFile = priority === 'urgent' || priority === 'high'
-            ? '/sounds/urgent-call.mp3'
-            : '/sounds/waiter-call.mp3';
-        const audio = new Audio(soundFile);
-        audio.play().catch(() => { });
+        try {
+            const ctx = new AudioContext();
+            const isUrgent = priority === 'urgent' || priority === 'high';
+            const delays = isUrgent ? [0, 120, 240] : [0];
+            delays.forEach((delayMs) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = isUrgent ? 1040 : 700;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.45, ctx.currentTime + delayMs / 1000);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delayMs / 1000 + 0.18);
+                osc.start(ctx.currentTime + delayMs / 1000);
+                osc.stop(ctx.currentTime + delayMs / 1000 + 0.18);
+            });
+        } catch { }
     };
 
     const markAsCompleted = async (callId: string) => {
