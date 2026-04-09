@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { createClient } from "@/lib/supabase/client"
 import {
     LayoutDashboard,
+    LayoutGrid,
     UtensilsCrossed,
     ClipboardList,
     Armchair,
@@ -57,6 +58,7 @@ const navigation: NavItem[] = [
             { label: "Categorías", href: "/dashboard/menu/categories", icon: Tag },
             { label: "Todos los Productos", href: "/dashboard/menu/products", icon: Store },
             { label: "Diseño del Menú", href: "/dashboard/menu/design", icon: Palette },
+            { label: "Galería de Diseños", href: "/dashboard/menu/design-gallery", icon: LayoutGrid },
         ],
     },
 
