@@ -33,7 +33,7 @@ interface Table {
     capacity: number;
     status: 'available' | 'occupied' | 'reserved';
     zone: string | null;
-    qr_code_url: string | null;
+    qr_slug: string | null;
     position_x: number;
     position_y: number;
     current_order_total?: number;
@@ -117,7 +117,7 @@ export default function TablesPage() {
                         name: data.name,
                         capacity: data.capacity || 4,
                         zone: data.zone,
-                        qr_code_url: qrUrl,
+                        qr_slug: qrUrl,
                         status: 'available',
                     });
             }

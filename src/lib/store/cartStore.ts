@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Product, SelectedModifier, Promotion } from '@/types/database';
+import { extractName } from '@/lib/utils';
 
 export interface CartItem {
     id: string; // Unique cart item ID
@@ -136,7 +137,7 @@ export const useCartStore = create<CartState>()(
                 const newItem: CartItem = {
                     id: generateItemId(),
                     productId: product.id,
-                    productName: product.name_es,
+                    productName: extractName(product.name),
                     quantity,
                     unitPrice,
                     totalPrice,

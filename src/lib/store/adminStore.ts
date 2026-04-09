@@ -22,8 +22,8 @@ interface AdminMetrics {
     newThisMonth: number;
     churnedThisMonth: number;
     starterCount: number;
-    basicCount: number;
-    proCount: number;
+    growthCount: number;
+    scaleCount: number;
     commissionRevenue: number;
     subscriptionRevenue: number;
 }
@@ -85,8 +85,8 @@ const initialMetrics: AdminMetrics = {
     newThisMonth: 0,
     churnedThisMonth: 0,
     starterCount: 0,
-    basicCount: 0,
-    proCount: 0,
+    growthCount: 0,
+    scaleCount: 0,
     commissionRevenue: 0,
     subscriptionRevenue: 0,
 };
@@ -191,12 +191,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         thisMonth.setHours(0, 0, 0, 0);
 
         const starterCount = activeRestaurants.filter(r =>
-            r.subscription_plan === 'starter' || !r.subscription_plan
+            r.plan_tier === 'starter' || !r.plan_tier
         ).length;
-        const basicCount = activeRestaurants.filter(r => r.subscription_plan === 'basic').length;
-        const proCount = activeRestaurants.filter(r => r.subscription_plan === 'pro').length;
+        const growthCount = activeRestaurants.filter(r => r.plan_tier === 'growth').length;
+        const scaleCount = activeRestaurants.filter(r => r.plan_tier === 'scale').length;
 
-        const mrr = (basicCount * 40) + (proCount * 90);
+        const mrr = (growthCount * 39) + (scaleCount * 89);
 
         const commissionRevenue = commissions
             .filter(c => new Date(c.created_at) >= thisMonth)
@@ -211,8 +211,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
                 newThisMonth: restaurants.filter(r => new Date(r.created_at) >= thisMonth).length,
                 churnedThisMonth: restaurants.filter(r => r.cancelled_at && new Date(r.cancelled_at) >= thisMonth).length,
                 starterCount,
-                basicCount,
-                proCount,
+                growthCount,
+                scaleCount,
                 commissionRevenue,
                 subscriptionRevenue: 0, // TODO: Calculate from subscription_payments
             }
@@ -313,7 +313,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         // Update restaurant
         const { error: restError } = await supabase
             .from('restaurants')
-            .update({ subscription_plan: plan })
+            .update({ plan_tier: plan })
             .eq('id', restaurantId);
 
         if (restError) {
@@ -333,7 +333,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
         set(state => ({
             restaurants: state.restaurants.map(r =>
-                r.id === restaurantId ? { ...r, subscription_plan: plan as any } : r
+                r.id === restaurantId ? { ...r, plan_tier: plan as any } : r
             )
         }));
         return true;

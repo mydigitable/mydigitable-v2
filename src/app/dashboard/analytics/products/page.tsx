@@ -13,6 +13,16 @@ import {
     ChevronDown,
 } from "lucide-react";
 
+function extractName(name: unknown): string {
+    if (!name) return '';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name !== null) {
+        const n = name as Record<string, string>;
+        return n.es || n.en || Object.values(n)[0] || '';
+    }
+    return '';
+}
+
 interface ProductStat {
     id: string;
     name: string;
@@ -42,7 +52,9 @@ export default function ProductsAnalyticsPage() {
             .from("restaurants")
             .select("id")
             .eq("owner_id", user.id)
-            .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .single();
 
         if (restaurant) {
             // Get products with order items count
@@ -50,9 +62,9 @@ export default function ProductsAnalyticsPage() {
                 .from("products")
                 .select(`
                     id,
-                    name_es,
+                    name,
                     price,
-                    category:categories(name_es)
+                    category:menu_categories(name)
                 `)
                 .eq("restaurant_id", restaurant.id);
 
@@ -60,8 +72,8 @@ export default function ProductsAnalyticsPage() {
                 // Simulate stats (in a real app, this would come from order_items aggregation)
                 const stats: ProductStat[] = productData.map(p => ({
                     id: p.id,
-                    name: p.name_es,
-                    category: (p.category as any)?.name_es || 'Sin categoría',
+                    name: extractName((p as any).name),
+                    category: extractName((p.category as any)?.name) || 'Sin categoría',
                     sold: Math.floor(Math.random() * 100),
                     revenue: Math.floor(Math.random() * 500),
                     trend: Math.random() * 40 - 10,
@@ -97,8 +109,8 @@ export default function ProductsAnalyticsPage() {
                 <button
                     onClick={() => setSortBy('sold')}
                     className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors ${sortBy === 'sold'
-                            ? 'bg-primary text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                 >
                     Por Unidades
@@ -106,8 +118,8 @@ export default function ProductsAnalyticsPage() {
                 <button
                     onClick={() => setSortBy('revenue')}
                     className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors ${sortBy === 'revenue'
-                            ? 'bg-primary text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                 >
                     Por Ingresos

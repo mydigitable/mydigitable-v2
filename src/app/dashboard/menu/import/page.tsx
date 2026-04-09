@@ -179,10 +179,10 @@ export default function ImportMenuPage() {
             for (const catName of uniqueCategories) {
                 // Check if category exists
                 const { data: existing } = await supabase
-                    .from("categories")
+                    .from("menu_categories")
                     .select("id")
                     .eq("restaurant_id", restaurant.id)
-                    .eq("name_es", catName)
+                    .eq("name", { es: catName })
                     .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
 
                 if (existing) {
@@ -190,10 +190,10 @@ export default function ImportMenuPage() {
                 } else {
                     // Create new category
                     const { data: newCat } = await supabase
-                        .from("categories")
+                        .from("menu_categories")
                         .insert({
                             restaurant_id: restaurant.id,
-                            name_es: catName,
+                            name: { es: catName },
                             is_active: true,
                         })
                         .select("id")
@@ -212,8 +212,8 @@ export default function ImportMenuPage() {
                     .insert({
                         restaurant_id: restaurant.id,
                         category_id: categoryMap[product.category],
-                        name_es: product.name,
-                        description_es: product.description || null,
+                        name: { es: product.name },
+                        description: product.description ? { es: product.description } : null,
                         price: product.price,
                         is_available: true,
                     });

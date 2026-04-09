@@ -36,7 +36,7 @@ interface Restaurant {
     phone: string | null;
     address: string | null;
     city: string | null;
-    subscription_plan: string;
+    plan_tier: string;
     is_active: boolean;
     created_at: string;
     owner_id: string;
@@ -167,7 +167,7 @@ export default function RestaurantDetailPage() {
             // Update restaurant
             await supabase
                 .from("restaurants")
-                .update({ subscription_plan: newPlan })
+                .update({ plan_tier: newPlan })
                 .eq("id", restaurant.id);
 
             // Update subscription
@@ -176,7 +176,7 @@ export default function RestaurantDetailPage() {
                 .update({ plan: newPlan })
                 .eq("restaurant_id", restaurant.id);
 
-            setRestaurant({ ...restaurant, subscription_plan: newPlan });
+            setRestaurant({ ...restaurant, plan_tier: newPlan });
             if (subscription) {
                 setSubscription({ ...subscription, plan: newPlan });
             }
@@ -522,7 +522,7 @@ export default function RestaurantDetailPage() {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <span className="text-slate-400">Plan actual</span>
-                            {getPlanBadge(restaurant.subscription_plan)}
+                            {getPlanBadge(restaurant.plan_tier)}
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -555,10 +555,10 @@ export default function RestaurantDetailPage() {
                                 <button
                                     key={plan}
                                     onClick={() => handleChangePlan(plan)}
-                                    disabled={restaurant.subscription_plan === plan}
+                                    disabled={restaurant.plan_tier === plan}
                                     className={`
                                         px-3 py-2 rounded-xl text-sm font-bold transition-all capitalize
-                                        ${restaurant.subscription_plan === plan
+                                        ${restaurant.plan_tier === plan
                                             ? "bg-indigo-500 text-white"
                                             : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                         }

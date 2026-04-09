@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     ArrowRight,
     ArrowLeft,
@@ -11,18 +10,18 @@ import {
     Store,
     Phone,
     MapPin,
-    Settings2,
+    Settings,
     Clock,
     CreditCard,
-    Palette,
-    Loader2,
-    Sparkles,
-    Table2,
     UtensilsCrossed,
-    PartyPopper,
+    Palette,
+    Sparkles,
+    Loader2
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import type { PlanTier } from '@/types/database';
 
-// Components
+// Importar componentes de pasos
 import { ProgressBar } from "@/components/onboarding/ProgressBar";
 import { Step1Business } from "@/components/onboarding/Step1Business";
 import { Step2Contact } from "@/components/onboarding/Step2Contact";
@@ -34,6 +33,7 @@ import { Step7Tables } from "@/components/onboarding/Step7Tables";
 import { Step8Menu } from "@/components/onboarding/Step8Menu";
 import { Step9Appearance } from "@/components/onboarding/Step9Appearance";
 import { Step10Summary } from "@/components/onboarding/Step10Summary";
+import { ThemeSelector } from "@/components/theme/ThemeSelector";
 
 const TOTAL_STEPS = 10;
 
@@ -41,83 +41,111 @@ const steps = [
     { id: 1, title: "Tu negocio", icon: Store },
     { id: 2, title: "Contacto", icon: Phone },
     { id: 3, title: "Ubicación", icon: MapPin },
-    { id: 4, title: "Modos", icon: Settings2 },
+    { id: 4, title: "Operación", icon: Settings },
     { id: 5, title: "Horarios", icon: Clock },
     { id: 6, title: "Pagos", icon: CreditCard },
-    { id: 7, title: "Mesas", icon: Table2 },
+    { id: 7, title: "Mesas", icon: UtensilsCrossed },
     { id: 8, title: "Menú", icon: UtensilsCrossed },
     { id: 9, title: "Apariencia", icon: Palette },
-    { id: 10, title: "¡Listo!", icon: PartyPopper },
+    { id: 10, title: "Resumen", icon: Sparkles },
 ];
 
-export default function OnboardingPage() {
-    const [currentStep, setCurrentStep] = useState(1);
-    const [formData, setFormData] = useState<Record<string, any>>({
-        // Defaults
-        business_type: "restaurant",
-        country: "España",
-        mode_dine_in: true,
-        accepts_takeaway: true,
-        payment_settings: { accepts_cash: true, accepts_card: true },
-        theme_id: "classic",
-        primary_color: "#22C55E",
-        menu_option: "empty",
-    });
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [restaurantId, setRestaurantId] = useState<string | null>(null);
+interface OnboardingConfig {
+    userId: string;
+    email: string;
+    restaurantName: string;
+    country: string;
+    planTier: PlanTier;
+    locations: number;
+    timestamp: string;
+}
 
+export default function OnboardingPage() {
     const router = useRouter();
     const supabase = createClient();
 
+    const [currentStep, setCurrentStep] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [restaurantId, setRestaurantId] = useState<string | null>(null);
+    const [config, setConfig] = useState<OnboardingConfig | null>(null);
+
+    // Form data acumulado
+    const [formData, setFormData] = useState<Record<string, any>>({
+        // Defaults
+        business_type: "restaurant",
+        primary_color: "#22C55E",
+        secondary_color: "#FFC107",
+        default_language: "es",
+        supported_languages: ["es"],
+        currency: "EUR",
+        timezone: "Europe/Madrid",
+
+        // Operational defaults
+        location_mode: "fixed_table",
+        payment_timing: "after",
+        accepts_cash: true,
+        accepts_card: true,
+        mode_pickup: false,
+        shared_tables_enabled: false,
+
+        // Staff defaults
+        tips_enabled: true,
+        tip_suggestions: [10, 15, 20],
+        tips_distribution: "individual",
+        tips_payout: "end_of_shift",
+        call_waiter_enabled: true,
+        call_motives: ["Agua", "Cubiertos", "Servilletas", "La cuenta", "Otro"],
+
+        // Menu defaults
+        menu_option: "empty",
+
+        // Theme defaults
+        theme_id: "modern-minimal",
+        theme_primary_color: null,
+        theme_font: null,
+        theme_font_size: "md",
+    });
+
     useEffect(() => {
-        loadExistingData();
+        loadOnboardingData();
     }, []);
 
-    const loadExistingData = async () => {
+    const loadOnboardingData = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                router.push("/login");
+            // 1. Cargar config de localStorage
+            const stored = localStorage.getItem('onboardingConfig');
+            if (!stored) {
+                router.push('/register');
                 return;
             }
 
-            const { data: restaurants } = await supabase
-                .from("restaurants")
-                .select("*")
-                .eq("owner_id", user.id)
-                .limit(1);
+            const parsed = JSON.parse(stored) as OnboardingConfig;
+            setConfig(parsed);
 
-            if (restaurants && restaurants.length > 0) {
-                const restaurant = restaurants[0];
-                setRestaurantId(restaurant.id);
+            // 2. Verificar si ya existe el restaurant
+            const { data: existingRestaurant } = await supabase
+                .from('restaurants')
+                .select('id, onboarding_completed')
+                .eq('owner_id', parsed.userId)
+                .single();
 
-                if (restaurant.onboarding_completed) {
-                    router.push("/dashboard");
+            if (existingRestaurant) {
+                setRestaurantId(existingRestaurant.id);
+
+                // Si ya completó el onboarding, redirigir al dashboard
+                if (existingRestaurant.onboarding_completed) {
+                    localStorage.removeItem('onboardingConfig');
+                    router.push('/dashboard');
                     return;
                 }
 
-                // Merge existing data
-                setFormData(prev => ({
-                    ...prev,
-                    ...restaurant,
-                    email: restaurant.email || user.email,
-                }));
-
-                // Resume from last step
-                if (restaurant.onboarding_step > 1) {
-                    setCurrentStep(restaurant.onboarding_step);
-                }
-            } else {
-                // No restaurant - prefill email
-                setFormData(prev => ({
-                    ...prev,
-                    email: user.email,
-                }));
+                // TODO: Cargar progreso guardado si existe
             }
+
+            setLoading(false);
         } catch (error) {
-            console.error("Error loading data:", error);
-        } finally {
+            console.error('Error loading onboarding data:', error);
             setLoading(false);
         }
     };
@@ -127,353 +155,384 @@ export default function OnboardingPage() {
     };
 
     const saveProgress = async (step: number) => {
-        if (!restaurantId) return;
+        if (!restaurantId || !config) return;
 
+        setSaving(true);
         try {
-            await supabase
-                .from("restaurants")
-                .update({
-                    ...formData,
-                    onboarding_step: step,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq("id", restaurantId);
+            // Guardar progreso en localStorage
+            localStorage.setItem('onboardingProgress', JSON.stringify({
+                step,
+                formData,
+                timestamp: new Date().toISOString()
+            }));
+
+
         } catch (error) {
-            console.error("Error saving:", error);
+            console.error('Error saving progress:', error);
+        } finally {
+            setSaving(false);
         }
     };
 
-    // Validations per step
     const canProceed = (step: number): boolean => {
         switch (step) {
-            case 1: return !!formData.name?.trim();
-            case 2: return !!formData.email && !!formData.phone;
-            case 3: return !!formData.address?.trim();
-            case 4: return formData.mode_dine_in || formData.accepts_takeaway ||
-                formData.accepts_delivery || formData.mode_beach || formData.mode_events;
-            case 6: return formData.payment_settings?.accepts_cash || formData.payment_settings?.accepts_card;
-            case 10: return formData.confirmed === true;
-            default: return true;
+            case 1:
+                return !!formData.business_type;
+            case 2:
+                return !!formData.phone;
+            case 3:
+                return !!formData.address && !!formData.city;
+            case 4:
+                return !!formData.location_mode && !!formData.payment_timing;
+            case 5:
+                return !!formData.working_hours;
+            case 6:
+                return true; // Payments tiene defaults
+            case 7:
+                return true; // Tables es opcional
+            case 8:
+                return !!formData.menu_option;
+            case 9:
+                return !!formData.primary_color;
+            case 10:
+                return true;
+            default:
+                return false;
         }
-    };
-
-    const canSkip = (step: number): boolean => {
-        return [5, 7, 8, 9].includes(step);
     };
 
     const handleNext = async () => {
-        if (!canProceed(currentStep)) return;
+        if (!canProceed(currentStep)) {
+            alert('Por favor completa todos los campos requeridos');
+            return;
+        }
 
-        setSaving(true);
-        await saveProgress(currentStep + 1);
-        setSaving(false);
+        await saveProgress(currentStep);
 
         if (currentStep < TOTAL_STEPS) {
-            setCurrentStep(prev => prev + 1);
+            setCurrentStep(currentStep + 1);
+        } else {
+            await handleComplete();
         }
     };
 
     const handleBack = () => {
         if (currentStep > 1) {
-            setCurrentStep(prev => prev - 1);
+            setCurrentStep(currentStep - 1);
         }
     };
 
-    const handleSkip = async () => {
-        setSaving(true);
-        await saveProgress(currentStep + 1);
-        setSaving(false);
-        setCurrentStep(prev => prev + 1);
-    };
-
     const handleComplete = async () => {
-        if (!formData.confirmed) return;
+        if (!config) return;
 
         setSaving(true);
-
         try {
-            await supabase
-                .from("restaurants")
-                .update({
-                    ...formData,
-                    onboarding_completed: true,
-                    onboarding_step: TOTAL_STEPS,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq("id", restaurantId);
 
-            // Create tables if specified
-            if (formData.table_count > 0) {
-                const tables = Array.from({ length: formData.table_count }, (_, i) => ({
-                    restaurant_id: restaurantId,
-                    number: `${i + 1}`,
-                    name: `Mesa ${i + 1}`,
-                    zone: "Principal",
-                    is_active: true,
-                }));
 
-                await supabase.from("tables").insert(tables);
+            // Mapear país a código ISO
+            const countryCodeMap: Record<string, string> = {
+                'España': 'ES', 'México': 'MX', 'Argentina': 'AR',
+                'Colombia': 'CO', 'Chile': 'CL', 'Perú': 'PE',
+                'Venezuela': 'VE', 'Ecuador': 'EC', 'Guatemala': 'GT',
+                'Cuba': 'CU', 'Bolivia': 'BO', 'República Dominicana': 'DO',
+                'Honduras': 'HN', 'Paraguay': 'PY', 'El Salvador': 'SV',
+                'Nicaragua': 'NI', 'Costa Rica': 'CR', 'Panamá': 'PA',
+                'Uruguay': 'UY', 'Puerto Rico': 'PR', 'Estados Unidos': 'US',
+                'Francia': 'FR', 'Italia': 'IT', 'Portugal': 'PT',
+                'Reino Unido': 'GB', 'Alemania': 'DE', 'Países Bajos': 'NL',
+                'Bélgica': 'BE', 'Suiza': 'CH', 'Austria': 'AT', 'Brasil': 'BR',
+            };
+            const countryCode = countryCodeMap[config.country] || 'ES';
+
+            // 1. Crear o actualizar restaurant
+            let finalRestaurantId = restaurantId;
+
+            if (!restaurantId) {
+                // Generar slug
+                const baseSlug = config.restaurantName
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-+|-+$/g, "");
+
+                let finalSlug = baseSlug;
+                let attempts = 0;
+                while (attempts < 5) {
+                    const { data: existing } = await supabase
+                        .from("restaurants")
+                        .select("id")
+                        .eq("slug", finalSlug)
+                        .limit(1);
+
+                    if (!existing || existing.length === 0) break;
+                    finalSlug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+                    attempts++;
+                }
+
+                // Crear restaurant
+                const { data: newRestaurant, error: createError } = await supabase
+                    .from("restaurants")
+                    .insert({
+                        owner_id: config.userId,
+                        name: config.restaurantName,
+                        slug: finalSlug,
+                        plan_tier: config.planTier,
+                        country: countryCode,
+                        email: config.email,
+                        total_locations: config.locations,
+                        business_type: formData.business_type,
+                        phone: formData.phone,
+                        website: formData.website,
+                        address: formData.address,
+                        city: formData.city,
+                        logo_url: formData.logo_url,
+                        cover_image_url: formData.cover_image_url,
+                        primary_color: formData.primary_color,
+                        secondary_color: formData.secondary_color,
+                        default_language: formData.default_language,
+                        supported_languages: formData.supported_languages,
+                        currency: formData.currency,
+                        timezone: formData.timezone,
+                        theme_id: formData.theme_id,
+                        theme_primary_color: formData.theme_primary_color,
+                        theme_font: formData.theme_font,
+                        theme_font_size: formData.theme_font_size,
+                        is_active: true,
+                        onboarding_completed: true,
+                    })
+                    .select()
+                    .single();
+
+                if (createError) throw createError;
+                finalRestaurantId = newRestaurant.id;
+            } else {
+                // Actualizar restaurant existente
+                const { error: updateError } = await supabase
+                    .from("restaurants")
+                    .update({
+                        business_type: formData.business_type,
+                        phone: formData.phone,
+                        website: formData.website,
+                        address: formData.address,
+                        city: formData.city,
+                        logo_url: formData.logo_url,
+                        cover_image_url: formData.cover_image_url,
+                        primary_color: formData.primary_color,
+                        secondary_color: formData.secondary_color,
+                        default_language: formData.default_language,
+                        supported_languages: formData.supported_languages,
+                        currency: formData.currency,
+                        timezone: formData.timezone,
+                        onboarding_completed: true,
+                    })
+                    .eq("id", restaurantId);
+
+                if (updateError) throw updateError;
             }
 
-            // Create demo menu if selected
-            if (formData.menu_option === "demo") {
-                await createDemoMenu();
-            } else if (formData.menu_option === "empty") {
-                await createEmptyMenu();
-            }
+            // 2. Crear restaurant_config
+            const { error: configError } = await supabase
+                .from("restaurant_config")
+                .upsert({
+                    restaurant_id: finalRestaurantId,
+                    operational_settings: {
+                        location_mode: formData.location_mode,
+                        has_delivery: formData.has_delivery || false,
+                        has_beach_service: formData.has_beach_service || false,
+                        has_room_service: formData.has_room_service || false,
+                        has_pickup: formData.mode_pickup || false,
+                        payment_timing: formData.payment_timing,
+                        accepts_cash: formData.accepts_cash,
+                        working_hours: formData.working_hours || {},
+                        menu_schedules: formData.menu_schedules || {},
+                        auto_switch_menus: formData.auto_switch_menus || false,
+                    },
+                    staff_settings: {
+                        tips_enabled: formData.tips_enabled,
+                        tip_suggestions: formData.tip_suggestions,
+                        tips_distribution: formData.tips_distribution,
+                        tips_payout: formData.tips_payout,
+                        call_waiter_enabled: formData.call_waiter_enabled,
+                        call_motives: formData.call_motives,
+                    },
+                    customer_settings: {
+                        shared_table_enabled: formData.shared_tables_enabled || false,
+                    },
+                });
 
-            router.push("/dashboard");
-        } catch (error) {
-            console.error("Error completing:", error);
+            if (configError) throw configError;
+
+            // 3. Limpiar y redirigir
+            localStorage.removeItem('onboardingConfig');
+            localStorage.removeItem('onboardingProgress');
+
+            router.push('/dashboard');
+
+        } catch (error: any) {
+            console.error('❌ Error completing onboarding:', error);
+            alert(`Error: ${error.message}`);
+        } finally {
             setSaving(false);
         }
     };
 
-    const createEmptyMenu = async () => {
-        await supabase.from("categories").insert({
-            restaurant_id: restaurantId,
-            name: "General",
-            position: 0,
-            is_active: true,
-        });
-    };
-
-    const createDemoMenu = async () => {
-        const categories = [
-            { name: "Entrantes", position: 0 },
-            { name: "Principales", position: 1 },
-            { name: "Postres", position: 2 },
-        ];
-
-        for (const cat of categories) {
-            const { data: category } = await supabase
-                .from("categories")
-                .insert({ restaurant_id: restaurantId, ...cat, is_active: true })
-                .select()
-                .single();
-
-            if (category) {
-                const products = getDemoProducts(cat.name, category.id);
-                await supabase.from("products").insert(products);
-            }
-        }
-    };
-
-    const getDemoProducts = (categoryName: string, categoryId: string) => {
-        const demos: Record<string, any[]> = {
-            "Entrantes": [
-                { name: "Patatas bravas", price: 5.50, description: "Con salsa brava casera" },
-                { name: "Croquetas", price: 6.00, description: "De jamón ibérico" },
-                { name: "Ensalada mixta", price: 7.00, description: "Lechuga, tomate, cebolla" },
-            ],
-            "Principales": [
-                { name: "Hamburguesa clásica", price: 12.00, description: "200g de carne, queso, lechuga" },
-                { name: "Pizza Margarita", price: 10.00, description: "Tomate, mozzarella, albahaca" },
-                { name: "Paella valenciana", price: 15.00, description: "Arroz, pollo, verduras" },
-            ],
-            "Postres": [
-                { name: "Tarta de queso", price: 5.00, description: "Casera, con mermelada" },
-                { name: "Helado artesanal", price: 4.00, description: "3 bolas a elegir" },
-                { name: "Café con leche", price: 2.00, description: "" },
-            ],
-        };
-
-        return (demos[categoryName] || []).map((p, i) => ({
-            restaurant_id: restaurantId,
-            category_id: categoryId,
-            ...p,
-            position: i,
-            is_active: true,
-            is_available: true,
-        }));
-    };
-
-    const handleEditStep = (step: number) => {
-        setCurrentStep(step);
-    };
-
-    // Handle "Terminar ahora" from step 3+
-    const handleFinishNow = async () => {
-        if (currentStep < 3) return;
-
-        setSaving(true);
-
-        // Set confirmation to true and update
-        setFormData(prev => ({ ...prev, confirmed: true }));
-
-        await supabase
-            .from("restaurants")
-            .update({
-                ...formData,
-                confirmed: true,
-                onboarding_completed: true,
-                onboarding_step: TOTAL_STEPS,
-                updated_at: new Date().toISOString(),
-            })
-            .eq("id", restaurantId);
-
-        router.push("/dashboard");
-    };
-
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
             </div>
         );
     }
 
-    const StepComponent = {
-        1: Step1Business,
-        2: Step2Contact,
-        3: Step3Location,
-        4: Step4Modes,
-        5: Step5Hours,
-        6: Step6Payments,
-        7: Step7Tables,
-        8: Step8Menu,
-        9: Step9Appearance,
-        10: Step10Summary,
-    }[currentStep];
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-            {/* Header */}
-            <header className="bg-white border-b border-slate-100 sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between mb-4 lg:mb-0">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center">
-                                <span className="text-white font-black text-xl italic">M</span>
-                            </div>
-                            <div>
-                                <h1 className="font-black text-slate-900">Configuración inicial</h1>
-                            </div>
-                        </div>
-                    </div>
+            {/* Progress Bar */}
+            <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} steps={steps} />
 
-                    <ProgressBar
-                        currentStep={currentStep}
-                        totalSteps={TOTAL_STEPS}
-                        steps={steps}
-                    />
-                </div>
-            </header>
-
-            {/* Content */}
-            <main className="max-w-3xl mx-auto px-6 py-12">
+            {/* Main Content */}
+            <div className="max-w-4xl mx-auto px-6 py-12">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentStep}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.3 }}
                     >
-                        {/* Step Header */}
-                        <div className="text-center mb-10">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-black uppercase tracking-widest mb-4">
-                                <Sparkles size={14} />
-                                Paso {currentStep} de {TOTAL_STEPS}
-                            </div>
-                            <h2 className="text-3xl font-black text-slate-900 mb-2">
-                                {steps[currentStep - 1].title}
-                            </h2>
-                        </div>
+                        {currentStep === 1 && (
+                            <Step1Business
+                                formData={formData}
+                                updateFormData={updateFormData}
+                                restaurantName={config?.restaurantName || ''}
+                            />
+                        )}
+                        {currentStep === 2 && (
+                            <Step2Contact
+                                formData={formData}
+                                updateFormData={updateFormData}
+                                email={config?.email || ''}
+                            />
+                        )}
+                        {currentStep === 3 && (
+                            <Step3Location
+                                formData={formData}
+                                updateFormData={updateFormData}
+                                country={config?.country || ''}
+                            />
+                        )}
+                        {currentStep === 4 && (
+                            <Step4Modes
+                                formData={formData}
+                                updateFormData={updateFormData}
+                                planTier={config?.planTier || 'basic'}
+                            />
+                        )}
+                        {currentStep === 5 && (
+                            <Step5Hours
+                                formData={formData}
+                                updateFormData={updateFormData}
+                            />
+                        )}
+                        {currentStep === 6 && (
+                            <Step6Payments
+                                formData={formData}
+                                updateFormData={updateFormData}
+                            />
+                        )}
+                        {currentStep === 7 && (
+                            <Step7Tables
+                                formData={formData}
+                                updateFormData={updateFormData}
+                            />
+                        )}
+                        {currentStep === 8 && (
+                            <Step8Menu
+                                formData={formData}
+                                updateFormData={updateFormData}
+                            />
+                        )}
+                        {currentStep === 9 && (
+                            <div className="space-y-6">
+                                <div className="text-center mb-8">
+                                    <h1 className="text-3xl font-black text-slate-900 mb-3">
+                                        ¿Cómo quieres que se vea tu menú?
+                                    </h1>
+                                    <p className="text-slate-500 text-lg">
+                                        Tus clientes verán este diseño al escanear el QR
+                                    </p>
+                                </div>
 
-                        {/* Step Content */}
-                        <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 md:p-10">
-                            {StepComponent && (
-                                currentStep === 10 ? (
-                                    <Step10Summary
-                                        data={formData}
-                                        onUpdate={updateFormData}
-                                        onEditStep={handleEditStep}
-                                    />
-                                ) : (
-                                    <StepComponent
-                                        data={formData}
-                                        onUpdate={updateFormData}
-                                    />
-                                )
-                            )}
-                        </div>
+                                <ThemeSelector
+                                    defaultThemeId={formData.theme_id}
+                                    onThemeChange={(themeId, overrides) => {
+                                        updateFormData({
+                                            theme_id: themeId,
+                                            theme_primary_color: overrides.primaryColor ?? null,
+                                            theme_font: overrides.fontFamily ?? null,
+                                            theme_font_size: overrides.fontSize ?? 'md',
+                                        });
+                                    }}
+                                />
+
+                                <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <p className="text-sm text-blue-600 font-medium">
+                                        💡 Vista previa en vivo — Así verán tu menú tus clientes
+                                    </p>
+                                    <p className="text-xs text-blue-500 mt-1">
+                                        Podrás cambiar el tema en cualquier momento desde Settings
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        {currentStep === 10 && (
+                            <Step10Summary
+                                formData={formData}
+                                config={config}
+                            />
+                        )}
                     </motion.div>
                 </AnimatePresence>
 
-                {/* Navigation */}
-                <div className="flex items-center justify-between mt-8">
+                {/* Navigation Buttons */}
+                <div className="flex items-center justify-between mt-12 pt-8 border-t border-slate-200">
                     <button
                         onClick={handleBack}
-                        disabled={currentStep === 1 || saving}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${currentStep === 1
-                                ? "text-slate-300 cursor-not-allowed"
-                                : "text-slate-600 hover:bg-white"
-                            }`}
+                        disabled={currentStep === 1}
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-600 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     >
-                        <ArrowLeft size={18} />
+                        <ArrowLeft size={20} />
                         Anterior
                     </button>
 
-                    <div className="flex items-center gap-3">
-                        {/* Skip button */}
-                        {canSkip(currentStep) && (
-                            <button
-                                onClick={handleSkip}
-                                disabled={saving}
-                                className="px-4 py-3 text-slate-400 hover:text-slate-600 font-medium transition-all"
-                            >
-                                Saltar
-                            </button>
-                        )}
-
-                        {/* Finish Now - from step 3 */}
-                        {currentStep >= 3 && currentStep < 10 && (
-                            <button
-                                onClick={handleFinishNow}
-                                disabled={saving}
-                                className="flex items-center gap-2 px-5 py-3 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold transition-all"
-                            >
-                                <Check size={16} />
-                                Terminar ahora
-                            </button>
-                        )}
-
-                        {/* Final Complete button */}
-                        {currentStep === 10 ? (
-                            <button
-                                onClick={handleComplete}
-                                disabled={saving || !canProceed(10)}
-                                className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-emerald-600 text-white rounded-xl font-black text-lg shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-                            >
-                                {saving ? (
-                                    <Loader2 size={20} className="animate-spin" />
-                                ) : (
-                                    <>
-                                        Completar y entrar
-                                        <ArrowRight size={20} />
-                                    </>
-                                )}
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleNext}
-                                disabled={saving || !canProceed(currentStep)}
-                                className="flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-xl font-black text-lg shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-                            >
-                                {saving ? (
-                                    <Loader2 size={20} className="animate-spin" />
-                                ) : (
-                                    <>
-                                        Siguiente
-                                        <ArrowRight size={20} />
-                                    </>
-                                )}
-                            </button>
-                        )}
+                    <div className="text-sm text-slate-500 font-medium">
+                        Paso {currentStep} de {TOTAL_STEPS}
                     </div>
+
+                    <button
+                        onClick={handleNext}
+                        disabled={!canProceed(currentStep) || saving}
+                        className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold bg-primary text-white hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all shadow-lg shadow-primary/25"
+                    >
+                        {saving ? (
+                            <>
+                                <Loader2 size={20} className="animate-spin" />
+                                Guardando...
+                            </>
+                        ) : currentStep === TOTAL_STEPS ? (
+                            <>
+                                <Check size={20} />
+                                Finalizar
+                            </>
+                        ) : (
+                            <>
+                                Siguiente
+                                <ArrowRight size={20} />
+                            </>
+                        )}
+                    </button>
                 </div>
-            </main>
+            </div>
         </div>
     );
 }

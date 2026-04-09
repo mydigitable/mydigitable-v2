@@ -36,7 +36,9 @@ export default function LanguagesSettingsPage() {
             .from("restaurants")
             .select("*")
             .eq("owner_id", user.id)
-            .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .single();
 
         if (data) {
             setRestaurant(data);

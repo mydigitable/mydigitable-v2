@@ -45,7 +45,7 @@ interface RecentRestaurant {
     id: string;
     name: string;
     slug: string;
-    subscription_plan: string;
+    plan_tier: string;
     created_at: string;
     owner_email?: string;
 }
@@ -66,19 +66,19 @@ export default function AdminDashboardPage() {
             // Cargar restaurantes
             const { data: restaurants, error: restError } = await supabase
                 .from("restaurants")
-                .select("id, name, slug, subscription_plan, created_at, is_active, cancelled_at");
+                .select("id, name, slug, plan_tier, created_at, is_active");
 
             if (restError) throw restError;
 
             const allRestaurants = restaurants || [];
-            const activeRestaurants = allRestaurants.filter(r => r.is_active && !r.cancelled_at);
+            const activeRestaurants = allRestaurants.filter(r => r.is_active);
 
             // Calcular por plan
             const starterCount = activeRestaurants.filter(r =>
-                r.subscription_plan === "starter" || !r.subscription_plan
+                r.plan_tier === "starter" || !r.plan_tier
             ).length;
-            const basicCount = activeRestaurants.filter(r => r.subscription_plan === "basic").length;
-            const proCount = activeRestaurants.filter(r => r.subscription_plan === "pro").length;
+            const basicCount = activeRestaurants.filter(r => r.plan_tier === "basic").length;
+            const proCount = activeRestaurants.filter(r => r.plan_tier === "pro").length;
 
             // Nuevos este mes
             const thisMonth = new Date();
@@ -89,9 +89,7 @@ export default function AdminDashboardPage() {
                 new Date(r.created_at) >= thisMonth
             ).length;
 
-            const churnedThisMonth = allRestaurants.filter(r =>
-                r.cancelled_at && new Date(r.cancelled_at) >= thisMonth
-            ).length;
+            const churnedThisMonth = 0; // TODO: implement when churn tracking column exists
 
             // Calcular MRR (40€ Basic + 90€ Pro)
             const mrr = (basicCount * 40) + (proCount * 90);
@@ -377,14 +375,14 @@ export default function AdminDashboardPage() {
                                     <div className="text-right">
                                         <span className={`
                                             px-2 py-1 rounded-lg text-xs font-bold capitalize
-                                            ${restaurant.subscription_plan === "pro"
+                                            ${restaurant.plan_tier === "pro"
                                                 ? "bg-indigo-500/20 text-indigo-400"
-                                                : restaurant.subscription_plan === "basic"
+                                                : restaurant.plan_tier === "basic"
                                                     ? "bg-blue-500/20 text-blue-400"
                                                     : "bg-slate-600/50 text-slate-400"
                                             }
                                         `}>
-                                            {restaurant.subscription_plan || "Starter"}
+                                            {restaurant.plan_tier || "Starter"}
                                         </span>
                                         <p className="text-xs text-slate-500 mt-1">{formatDate(restaurant.created_at)}</p>
                                     </div>

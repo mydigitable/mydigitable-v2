@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -9,156 +10,262 @@ import {
     Clock,
     Edit3,
     Trash2,
-    Copy,
     Check,
     X,
     Loader2,
+    Eye,
+    EyeOff,
+    AlertCircle,
+    Sparkles,
     Coffee,
     Utensils,
     Wine,
-    Sun,
-    Eye,
-    EyeOff,
+    Moon,
     ChevronRight,
-    Sparkles,
-    AlertCircle,
+    FolderOpen,
+    Package,
 } from "lucide-react";
-import Link from "next/link";
+import {
+    createMenu,
+    updateMenu,
+    deleteMenu as deleteMenuAction,
+    toggleMenuActive,
+} from "@/app/actions/menu";
+import { useMenu } from "@/contexts/MenuContext";
+
+// ============================================================================
+// TYPES — Matching actual Supabase schema
+// ============================================================================
 
 interface Menu {
     id: string;
     restaurant_id: string;
     name: string;
-    description: string | null;
-    icon: string;
+    type: string; // general, breakfast, lunch, dinner, drinks, special
+    theme_id: string;
+    schedule_type: string; // all_day, scheduled
+    start_time: string | null;
+    end_time: string | null;
     is_active: boolean;
-    is_default: boolean;
-    // Horarios de activación
-    schedule_enabled: boolean;
-    schedule_days: number[];  // 0-6 (Dom-Sab)
-    schedule_start_time: string | null;
-    schedule_end_time: string | null;
-    // Categorías incluidas
-    included_categories: string[];  // IDs de categorías
-    // Configuración
-    show_prices: boolean;
-    show_descriptions: boolean;
-    show_images: boolean;
-    sort_order: number;
+    display_order: number;
     created_at: string;
+    updated_at: string;
+    schedule: ScheduleDay[] | Record<string, ScheduleDayObj> | null;
 }
 
-interface Category {
+interface ScheduleDay {
+    day: string;
+    open: string;
+    close: string;
+    enabled: boolean;
+}
+
+interface ScheduleDayObj {
+    start: string;
+    end: string;
+    enabled: boolean;
+}
+
+interface MenuCategory {
     id: string;
-    name_es: string;
-    icon: string;
-    is_active: boolean;
+    restaurant_id: string;
+    name: string | { es?: string; en?: string };
+    description: string | null;
+    icon: string | null;
+    image_url: string | null;
+    is_visible: boolean;
+    menu_id: string;
+    sort_order: number;
+    display_order: number;
 }
 
-const menuIcons = [
-    { icon: '📋', label: 'General' },
-    { icon: '🍽️', label: 'Comida' },
-    { icon: '🍺', label: 'Bebidas' },
-    { icon: '🍷', label: 'Vinos' },
-    { icon: '☕', label: 'Desayunos' },
-    { icon: '🥗', label: 'Almuerzos' },
-    { icon: '🌙', label: 'Cenas' },
-    { icon: '🍰', label: 'Postres' },
-    { icon: '🥤', label: 'Refrescos' },
-    { icon: '🍕', label: 'Para compartir' },
-    { icon: '👶', label: 'Niños' },
-    { icon: '🎉', label: 'Especial' },
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const menuTypes = [
+    { value: "general", label: "General", Icon: BookOpen, color: "text-slate-600", bg: "bg-slate-100" },
+    { value: "breakfast", label: "Desayunos", Icon: Coffee, color: "text-amber-600", bg: "bg-amber-50" },
+    { value: "lunch", label: "Comidas", Icon: Utensils, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { value: "dinner", label: "Cenas", Icon: Moon, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { value: "drinks", label: "Bebidas", Icon: Wine, color: "text-rose-600", bg: "bg-rose-50" },
+    { value: "special", label: "Especial", Icon: Sparkles, color: "text-violet-600", bg: "bg-violet-50" },
 ];
 
 const weekDays = [
-    { value: 0, label: 'Dom', short: 'D' },
-    { value: 1, label: 'Lun', short: 'L' },
-    { value: 2, label: 'Mar', short: 'M' },
-    { value: 3, label: 'Mié', short: 'X' },
-    { value: 4, label: 'Jue', short: 'J' },
-    { value: 5, label: 'Vie', short: 'V' },
-    { value: 6, label: 'Sáb', short: 'S' },
+    { key: "monday", label: "Lunes", short: "L" },
+    { key: "tuesday", label: "Martes", short: "M" },
+    { key: "wednesday", label: "Miércoles", short: "X" },
+    { key: "thursday", label: "Jueves", short: "J" },
+    { key: "friday", label: "Viernes", short: "V" },
+    { key: "saturday", label: "Sábado", short: "S" },
+    { key: "sunday", label: "Domingo", short: "D" },
 ];
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+function getCategoryName(cat: MenuCategory): string {
+    if (typeof cat.name === "string") return cat.name;
+    if (typeof cat.name === "object" && cat.name?.es) return cat.name.es;
+    return "Sin nombre";
+}
+
+function getMenuTypeInfo(type: string) {
+    return menuTypes.find((t) => t.value === type) || menuTypes[0];
+}
+
+function getMenuTypeIcon(type: string, size: number = 22) {
+    const info = getMenuTypeInfo(type);
+    const IconComponent = info.Icon;
+    return <IconComponent size={size} className={info.color} />;
+}
+
+function formatSchedule(menu: Menu): string | null {
+    if (menu.schedule_type === "all_day" && !menu.schedule) return "Todo el día";
+    if (!menu.schedule) return null;
+
+    // Handle array format
+    if (Array.isArray(menu.schedule)) {
+        const enabledDays = menu.schedule.filter((d) => d.enabled);
+        if (enabledDays.length === 0) return null;
+        const days = enabledDays.map((d) => d.day.substring(0, 3)).join(", ");
+        const first = enabledDays[0];
+        return `${days} · ${first.open} - ${first.close}`;
+    }
+
+    // Handle object format
+    const entries = Object.entries(menu.schedule);
+    const enabledEntries = entries.filter(([, val]) => val.enabled);
+    if (enabledEntries.length === 0) return null;
+    const dayNames = enabledEntries.map(([key]) => {
+        const found = weekDays.find((w) => w.key === key);
+        return found ? found.short : key.substring(0, 3);
+    });
+    const first = enabledEntries[0][1];
+    return `${dayNames.join(", ")} · ${first.start} - ${first.end}`;
+}
+
+// ============================================================================
+// MAIN PAGE
+// ============================================================================
 
 export default function MenusPage() {
     const [menus, setMenus] = useState<Menu[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
     const [loading, setLoading] = useState(true);
-    const [showAddModal, setShowAddModal] = useState(false);
+    const [showModal, setShowModal] = useState(false);
     const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
     const [saving, setSaving] = useState(false);
-    const [restaurant, setRestaurant] = useState<any>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [showBanner, setShowBanner] = useState(true);
 
     const supabase = createClient();
+    const router = useRouter();
+    const { refreshMenu } = useMenu();
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
+    // --- DATA LOADING (read-only, still via Supabase client for initial load) ---
+    const loadData = useCallback(async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
             if (!user) return;
 
             const { data: restaurants } = await supabase
                 .from("restaurants")
                 .select("*")
                 .eq("owner_id", user.id)
-                .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
+                .order("created_at", { ascending: true });
 
+            const restaurantData = restaurants?.[0] || null;
             if (!restaurantData) return;
-            setRestaurant(restaurantData);
 
             // Load menus
-            const { data: menusData } = await supabase
+            const { data: menusData, error: menusError } = await supabase
                 .from("menus")
+                .select("*")
+                .eq("restaurant_id", restaurantData.id)
+                .order("display_order");
+
+            if (menusError) {
+                console.error("Error loading menus:", menusError.message);
+            }
+            setMenus(menusData || []);
+
+            // Load categories (from menu_categories table)
+            const { data: categoriesData, error: catError } = await supabase
+                .from("menu_categories")
                 .select("*")
                 .eq("restaurant_id", restaurantData.id)
                 .order("sort_order");
 
-            setMenus(menusData || []);
-
-            // Load categories
-            const { data: categoriesData } = await supabase
-                .from("categories")
-                .select("id, name_es, icon, is_active")
-                .eq("restaurant_id", restaurantData.id)
-                .eq("is_active", true)
-                .order("sort_order");
-
-            setCategories(categoriesData || []);
+            if (catError) {
+                console.error("Error loading categories:", catError.message);
+            }
+            setMenuCategories(categoriesData || []);
         } catch (err) {
             console.error("Error loading data:", err);
         } finally {
             setLoading(false);
         }
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    // Get categories for a specific menu
+    const getCategoriesForMenu = (menuId: string) => {
+        return menuCategories.filter((cat) => cat.menu_id === menuId);
     };
 
+    // --- HANDLERS (using server actions) ---
     const handleSaveMenu = async (menuData: Partial<Menu>) => {
-        if (!restaurant) return;
-
         setSaving(true);
         try {
             if (editingMenu) {
-                await supabase
-                    .from("menus")
-                    .update({
-                        ...menuData,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq("id", editingMenu.id);
+                const result = await updateMenu(editingMenu.id, {
+                    name: menuData.name,
+                    type: menuData.type,
+                    schedule_type: menuData.schedule_type,
+                    start_time: menuData.start_time,
+                    end_time: menuData.end_time,
+                    schedule: menuData.schedule,
+                    is_active: menuData.is_active,
+                });
+
+                if (!result.success) {
+                    alert(`Error al actualizar: ${result.error}`);
+                    return;
+                }
             } else {
-                await supabase
-                    .from("menus")
-                    .insert({
-                        restaurant_id: restaurant.id,
-                        ...menuData,
-                        sort_order: menus.length,
-                    });
+                const result = await createMenu({
+                    name: menuData.name,
+                    type: menuData.type || "general",
+                    schedule_type: menuData.schedule_type || "all_day",
+                    start_time: menuData.start_time || null,
+                    end_time: menuData.end_time || null,
+                    schedule: menuData.schedule || null,
+                    is_active: true,
+                });
+
+                if (!result.success) {
+                    alert(`Error al crear menú: ${result.error}`);
+                    return;
+                }
+
+                // Redirect to wizard for the new menu
+                if (result.data?.id) {
+                    router.push(`/dashboard/menu/menus/${result.data.id}`);
+                    return;
+                }
             }
 
             await loadData();
-            setShowAddModal(false);
+            refreshMenu();
+            setShowModal(false);
             setEditingMenu(null);
         } catch (err) {
             console.error("Error saving menu:", err);
@@ -167,55 +274,41 @@ export default function MenusPage() {
         }
     };
 
-    const toggleMenuActive = async (menuId: string, isActive: boolean) => {
-        await supabase
-            .from("menus")
-            .update({ is_active: isActive })
-            .eq("id", menuId);
-        loadData();
+    const handleToggleMenuActive = async (menuId: string) => {
+        // Optimistic update
+        setMenus((prev) =>
+            prev.map((m) =>
+                m.id === menuId ? { ...m, is_active: !m.is_active } : m
+            )
+        );
+
+        const result = await toggleMenuActive(menuId);
+        if (!result.success) {
+            // Revert
+            setMenus((prev) =>
+                prev.map((m) =>
+                    m.id === menuId ? { ...m, is_active: !m.is_active } : m
+                )
+            );
+            alert(`Error: ${result.error}`);
+        }
+        refreshMenu();
     };
 
-    const setDefaultMenu = async (menuId: string) => {
-        // First, unset all defaults
-        await supabase
-            .from("menus")
-            .update({ is_default: false })
-            .eq("restaurant_id", restaurant.id);
-
-        // Then set the new default
-        await supabase
-            .from("menus")
-            .update({ is_default: true })
-            .eq("id", menuId);
-
-        loadData();
+    const handleDeleteMenu = async (menuId: string) => {
+        const result = await deleteMenuAction(menuId);
+        if (!result.success) {
+            alert(`Error al eliminar: ${result.error}`);
+            return;
+        }
+        setDeleteConfirm(null);
+        await loadData();
+        refreshMenu();
     };
 
-    const deleteMenu = async (menuId: string) => {
-        await supabase.from("menus").delete().eq("id", menuId);
-        loadData();
-    };
-
-    const duplicateMenu = async (menu: Menu) => {
-        await supabase.from("menus").insert({
-            restaurant_id: restaurant.id,
-            name: `${menu.name} (copia)`,
-            description: menu.description,
-            icon: menu.icon,
-            is_active: false,
-            is_default: false,
-            schedule_enabled: menu.schedule_enabled,
-            schedule_days: menu.schedule_days,
-            schedule_start_time: menu.schedule_start_time,
-            schedule_end_time: menu.schedule_end_time,
-            included_categories: menu.included_categories,
-            show_prices: menu.show_prices,
-            show_descriptions: menu.show_descriptions,
-            show_images: menu.show_images,
-            sort_order: menus.length,
-        });
-        loadData();
-    };
+    // ========================================================================
+    // RENDER
+    // ========================================================================
 
     if (loading) {
         return (
@@ -230,35 +323,67 @@ export default function MenusPage() {
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900">Cartas y Menús</h1>
+                    <h1 className="text-2xl font-black text-slate-900">
+                        Gestión de Menús
+                    </h1>
                     <p className="text-sm text-slate-500">
-                        Crea diferentes cartas para distintos momentos del día
+                        Crea y administra tus cartas para distintos momentos del día
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingMenu(null);
-                        setShowAddModal(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-primary/20"
-                >
-                    <Plus size={18} />
-                    Nueva Carta
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.push('/dashboard/menu/categories')}
+                        className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 hover:border-slate-300 bg-white text-slate-700 rounded-xl font-medium text-sm transition-colors"
+                    >
+                        <FolderOpen size={16} />
+                        + Categoría
+                    </button>
+                    <button
+                        onClick={() => router.push('/dashboard/menu/products')}
+                        className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 hover:border-slate-300 bg-white text-slate-700 rounded-xl font-medium text-sm transition-colors"
+                    >
+                        <Package size={16} />
+                        + Producto
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingMenu(null);
+                            setShowModal(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-primary/20"
+                    >
+                        <Plus size={18} />
+                        Nueva Carta
+                    </button>
+                </div>
             </div>
 
             {/* Info Banner */}
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
-                <AlertCircle size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                <div>
-                    <p className="font-bold text-blue-800 text-sm">¿Cómo funcionan las cartas?</p>
-                    <p className="text-sm text-blue-600 mt-1">
-                        Puedes crear diferentes cartas (ej: "Solo Bebidas", "Menú del Día", "Carta Completa") y
-                        configurar cuáles categorías incluye cada una. También puedes programar horarios para que
-                        se activen automáticamente.
-                    </p>
+            {showBanner && (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
+                    <AlertCircle
+                        size={20}
+                        className="text-blue-500 flex-shrink-0 mt-0.5"
+                    />
+                    <div className="flex-1">
+                        <p className="font-bold text-blue-800 text-sm">
+                            ¿Cómo funcionan las cartas?
+                        </p>
+                        <p className="text-sm text-blue-600 mt-1">
+                            Cada carta es un menú diferente (ej: &quot;Desayunos&quot;,
+                            &quot;Comidas&quot;, &quot;Cenas&quot;). Puedes activarlas o
+                            desactivarlas y configurar horarios. Las categorías se asignan
+                            desde la pestaña de Categorías.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setShowBanner(false)}
+                        className="p-1 hover:bg-blue-100 rounded-lg transition-colors flex-shrink-0"
+                    >
+                        <X size={16} className="text-blue-400" />
+                    </button>
                 </div>
-            </div>
+            )}
 
             {/* Menus List */}
             {menus.length === 0 ? (
@@ -266,13 +391,14 @@ export default function MenusPage() {
                     <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                         <BookOpen size={28} className="text-slate-300" />
                     </div>
-                    <h2 className="text-lg font-bold text-slate-900 mb-2">Sin cartas configuradas</h2>
+                    <h2 className="text-lg font-bold text-slate-900 mb-2">
+                        Sin cartas configuradas
+                    </h2>
                     <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                        Crea tu primera carta para organizar qué categorías y productos
-                        se muestran en tu menú digital.
+                        Crea tu primera carta para organizar tu menú digital.
                     </p>
                     <button
-                        onClick={() => setShowAddModal(true)}
+                        onClick={() => setShowModal(true)}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transition-colors"
                     >
                         <Plus size={18} />
@@ -281,34 +407,189 @@ export default function MenusPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {menus.map((menu) => (
-                        <MenuCard
-                            key={menu.id}
-                            menu={menu}
-                            categories={categories}
-                            onEdit={() => {
-                                setEditingMenu(menu);
-                                setShowAddModal(true);
-                            }}
-                            onToggle={() => toggleMenuActive(menu.id, !menu.is_active)}
-                            onSetDefault={() => setDefaultMenu(menu.id)}
-                            onDuplicate={() => duplicateMenu(menu)}
-                            onDelete={() => deleteMenu(menu.id)}
-                        />
-                    ))}
+                    {menus.map((menu, index) => {
+                        const cats = getCategoriesForMenu(menu.id);
+                        const typeInfo = getMenuTypeInfo(menu.type);
+                        const schedule = formatSchedule(menu);
+
+                        return (
+                            <motion.div
+                                key={menu.id}
+                                layout
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className={`bg-white rounded-2xl border-2 overflow-hidden transition-all ${menu.is_active
+                                    ? "border-primary/30 shadow-sm"
+                                    : "border-slate-100 opacity-75"
+                                    }`}
+                            >
+                                <div className="p-5">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-11 h-11 rounded-xl ${typeInfo.bg} flex items-center justify-center`}>
+                                                {getMenuTypeIcon(menu.type, 20)}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-900">
+                                                    {menu.name}
+                                                </h3>
+                                                <span className="text-xs text-slate-400 font-medium">
+                                                    {typeInfo.label}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Info */}
+                                    <div className="space-y-2 mb-4">
+                                        {/* Categories count */}
+                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                            <BookOpen
+                                                size={14}
+                                                className="text-slate-400"
+                                            />
+                                            <span>
+                                                {cats.length === 0
+                                                    ? "Sin categorías"
+                                                    : `${cats.length} categoría${cats.length !== 1 ? "s" : ""}`}
+                                            </span>
+                                        </div>
+
+                                        {/* Category names — clickable */}
+                                        {cats.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {cats.slice(0, 4).map((cat) => (
+                                                    <button
+                                                        key={cat.id}
+                                                        onClick={() => router.push("/dashboard/menu/categories")}
+                                                        className="px-2.5 py-1 bg-slate-50 hover:bg-primary/10 text-slate-600 hover:text-primary text-[11px] rounded-lg font-medium transition-colors flex items-center gap-1 group"
+                                                    >
+                                                        {getCategoryName(cat)}
+                                                        <ChevronRight size={10} className="text-slate-300 group-hover:text-primary/60 transition-colors" />
+                                                    </button>
+                                                ))}
+                                                {cats.length > 4 && (
+                                                    <button
+                                                        onClick={() => router.push("/dashboard/menu/categories")}
+                                                        className="px-2.5 py-1 bg-slate-50 hover:bg-primary/10 text-slate-400 hover:text-primary text-[11px] rounded-lg font-medium transition-colors"
+                                                    >
+                                                        +{cats.length - 4} más
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Schedule */}
+                                        {schedule && (
+                                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                                                <Clock
+                                                    size={14}
+                                                    className="text-slate-400"
+                                                />
+                                                <span>{schedule}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                                        {/* Toggle */}
+                                        <button
+                                            onClick={() =>
+                                                handleToggleMenuActive(menu.id)
+                                            }
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${menu.is_active
+                                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                                }`}
+                                        >
+                                            {menu.is_active ? (
+                                                <>
+                                                    <Eye size={14} />
+                                                    Activa
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <EyeOff size={14} />
+                                                    Inactiva
+                                                </>
+                                            )}
+                                        </button>
+
+                                        {/* Edit & Delete */}
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => router.push(`/dashboard/menu/menus/${menu.id}`)}
+                                                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                                title="Editar"
+                                            >
+                                                <Edit3
+                                                    size={14}
+                                                    className="text-slate-400"
+                                                />
+                                            </button>
+
+                                            {deleteConfirm === menu.id ? (
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDeleteMenu(menu.id)
+                                                        }
+                                                        className="p-2 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
+                                                        title="Confirmar eliminación"
+                                                    >
+                                                        <Check
+                                                            size={14}
+                                                            className="text-red-600"
+                                                        />
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            setDeleteConfirm(null)
+                                                        }
+                                                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                                        title="Cancelar"
+                                                    >
+                                                        <X
+                                                            size={14}
+                                                            className="text-slate-400"
+                                                        />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() =>
+                                                        setDeleteConfirm(menu.id)
+                                                    }
+                                                    className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2
+                                                        size={14}
+                                                        className="text-red-400"
+                                                    />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             )}
 
-            {/* Add/Edit Modal */}
+            {/* Modal */}
             <AnimatePresence>
-                {showAddModal && (
+                {showModal && (
                     <MenuModal
                         menu={editingMenu}
-                        categories={categories}
                         saving={saving}
                         onSave={handleSaveMenu}
                         onClose={() => {
-                            setShowAddModal(false);
+                            setShowModal(false);
                             setEditingMenu(null);
                         }}
                     />
@@ -318,205 +599,90 @@ export default function MenusPage() {
     );
 }
 
-// Menu Card Component
-function MenuCard({
-    menu,
-    categories,
-    onEdit,
-    onToggle,
-    onSetDefault,
-    onDuplicate,
-    onDelete,
-}: {
-    menu: Menu;
-    categories: Category[];
-    onEdit: () => void;
-    onToggle: () => void;
-    onSetDefault: () => void;
-    onDuplicate: () => void;
-    onDelete: () => void;
-}) {
-    const includedCount = menu.included_categories?.length || 0;
-    const allCategories = categories.length;
+// ============================================================================
+// MENU MODAL — Create & Edit
+// ============================================================================
 
-    const formatSchedule = () => {
-        if (!menu.schedule_enabled) return null;
-
-        const days = menu.schedule_days?.map(d => weekDays.find(w => w.value === d)?.short).join(', ');
-        const time = menu.schedule_start_time && menu.schedule_end_time
-            ? `${menu.schedule_start_time} - ${menu.schedule_end_time}`
-            : 'Todo el día';
-
-        return `${days} · ${time}`;
-    };
-
-    return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`bg-white rounded-2xl border-2 overflow-hidden transition-colors ${menu.is_active ? 'border-primary/30' : 'border-slate-100'
-                }`}
-        >
-            <div className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">
-                            {menu.icon}
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-900">{menu.name}</h3>
-                            {menu.description && (
-                                <p className="text-sm text-slate-500 line-clamp-1">{menu.description}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {menu.is_default && (
-                        <span className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase">
-                            Principal
-                        </span>
-                    )}
-                </div>
-
-                <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <BookOpen size={14} className="text-slate-400" />
-                        <span>
-                            {includedCount === allCategories
-                                ? 'Todas las categorías'
-                                : `${includedCount} de ${allCategories} categorías`}
-                        </span>
-                    </div>
-
-                    {menu.schedule_enabled && (
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                            <Clock size={14} className="text-slate-400" />
-                            <span>{formatSchedule()}</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center justify-between">
-                    <button
-                        onClick={onToggle}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${menu.is_active
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-slate-100 text-slate-500'
-                            }`}
-                    >
-                        {menu.is_active ? (
-                            <>
-                                <Eye size={14} />
-                                Activa
-                            </>
-                        ) : (
-                            <>
-                                <EyeOff size={14} />
-                                Inactiva
-                            </>
-                        )}
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                        {!menu.is_default && (
-                            <button
-                                onClick={onSetDefault}
-                                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                                title="Establecer como principal"
-                            >
-                                <Sparkles size={14} className="text-slate-400" />
-                            </button>
-                        )}
-                        <button
-                            onClick={onDuplicate}
-                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                            title="Duplicar"
-                        >
-                            <Copy size={14} className="text-slate-400" />
-                        </button>
-                        <button
-                            onClick={onEdit}
-                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                            title="Editar"
-                        >
-                            <Edit3 size={14} className="text-slate-400" />
-                        </button>
-                        {!menu.is_default && (
-                            <button
-                                onClick={onDelete}
-                                className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Eliminar"
-                            >
-                                <Trash2 size={14} className="text-red-400" />
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </motion.div>
-    );
-}
-
-// Menu Modal Component
 function MenuModal({
     menu,
-    categories,
     saving,
     onSave,
     onClose,
 }: {
     menu: Menu | null;
-    categories: Category[];
     saving: boolean;
     onSave: (data: Partial<Menu>) => void;
     onClose: () => void;
 }) {
-    const [name, setName] = useState(menu?.name || '');
-    const [description, setDescription] = useState(menu?.description || '');
-    const [icon, setIcon] = useState(menu?.icon || '📋');
-    const [scheduleEnabled, setScheduleEnabled] = useState(menu?.schedule_enabled || false);
-    const [scheduleDays, setScheduleDays] = useState<number[]>(menu?.schedule_days || [1, 2, 3, 4, 5]);
-    const [scheduleStart, setScheduleStart] = useState(menu?.schedule_start_time || '');
-    const [scheduleEnd, setScheduleEnd] = useState(menu?.schedule_end_time || '');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(
-        menu?.included_categories || categories.map(c => c.id)
+    const [name, setName] = useState(menu?.name || "");
+    const [type, setType] = useState(menu?.type || "general");
+    const [scheduleType, setScheduleType] = useState(
+        menu?.schedule_type || "all_day"
     );
-    const [showPrices, setShowPrices] = useState(menu?.show_prices ?? true);
-    const [showDescriptions, setShowDescriptions] = useState(menu?.show_descriptions ?? true);
-    const [showImages, setShowImages] = useState(menu?.show_images ?? true);
-    const [step, setStep] = useState(1);
 
-    const toggleDay = (day: number) => {
-        setScheduleDays(prev =>
-            prev.includes(day)
-                ? prev.filter(d => d !== day)
-                : [...prev, day]
-        );
+    // Build initial schedule from existing data
+    const buildInitialSchedule = (): Record<string, ScheduleDayObj> => {
+        const defaultSchedule: Record<string, ScheduleDayObj> = {};
+        weekDays.forEach((day) => {
+            defaultSchedule[day.key] = {
+                start: "09:00",
+                end: "23:00",
+                enabled: true,
+            };
+        });
+
+        if (!menu?.schedule) return defaultSchedule;
+
+        // Handle object format
+        if (!Array.isArray(menu.schedule)) {
+            return { ...defaultSchedule, ...(menu.schedule as Record<string, ScheduleDayObj>) };
+        }
+
+        // Handle array format → convert to object
+        const mapped: Record<string, ScheduleDayObj> = { ...defaultSchedule };
+        const dayMap: Record<string, string> = {
+            Lunes: "monday",
+            Martes: "tuesday",
+            Miércoles: "wednesday",
+            Jueves: "thursday",
+            Viernes: "friday",
+            Sábado: "saturday",
+            Domingo: "sunday",
+        };
+        menu.schedule.forEach((d) => {
+            const key = dayMap[d.day] || d.day.toLowerCase();
+            if (mapped[key]) {
+                mapped[key] = { start: d.open, end: d.close, enabled: d.enabled };
+            }
+        });
+        return mapped;
     };
 
-    const toggleCategory = (categoryId: string) => {
-        setSelectedCategories(prev =>
-            prev.includes(categoryId)
-                ? prev.filter(c => c !== categoryId)
-                : [...prev, categoryId]
-        );
+    const [schedule, setSchedule] = useState<Record<string, ScheduleDayObj>>(
+        buildInitialSchedule
+    );
+
+    const updateDaySchedule = (
+        dayKey: string,
+        field: keyof ScheduleDayObj,
+        value: string | boolean
+    ) => {
+        setSchedule((prev) => ({
+            ...prev,
+            [dayKey]: { ...prev[dayKey], [field]: value },
+        }));
     };
 
     const handleSubmit = () => {
+        if (!name.trim()) return;
         onSave({
-            name,
-            description: description || null,
-            icon,
-            schedule_enabled: scheduleEnabled,
-            schedule_days: scheduleDays,
-            schedule_start_time: scheduleStart || null,
-            schedule_end_time: scheduleEnd || null,
-            included_categories: selectedCategories,
-            show_prices: showPrices,
-            show_descriptions: showDescriptions,
-            show_images: showImages,
+            name: name.trim(),
+            type,
+            schedule_type: scheduleType,
+            start_time: null,
+            end_time: null,
+            schedule: scheduleType === "scheduled" ? schedule : null,
+            is_active: menu?.is_active ?? true,
         });
     };
 
@@ -533,302 +699,205 @@ function MenuModal({
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.95 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
             >
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
                     <h2 className="text-xl font-black text-slate-900">
-                        {menu ? 'Editar Carta' : 'Nueva Carta'}
+                        {menu ? "Editar Carta" : "Nueva Carta"}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl">
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-slate-100 rounded-xl"
+                    >
                         <X size={20} className="text-slate-400" />
                     </button>
                 </div>
 
-                {/* Steps */}
-                <div className="px-6 py-4 border-b border-slate-100 flex-shrink-0">
-                    <div className="flex items-center gap-4">
-                        <StepIndicator step={1} current={step} label="Información" />
-                        <ChevronRight size={16} className="text-slate-300" />
-                        <StepIndicator step={2} current={step} label="Categorías" />
-                        <ChevronRight size={16} className="text-slate-300" />
-                        <StepIndicator step={3} current={step} label="Horario" />
-                    </div>
-                </div>
-
                 {/* Content */}
-                <div className="p-6 overflow-y-auto flex-1">
-                    {step === 1 && (
-                        <div className="space-y-6">
-                            {/* Icon Selection */}
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-3">
-                                    Icono
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {menuIcons.map((item) => (
-                                        <button
-                                            key={item.icon}
-                                            onClick={() => setIcon(item.icon)}
-                                            className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${icon === item.icon
-                                                ? 'bg-primary/10 ring-2 ring-primary'
-                                                : 'bg-slate-100 hover:bg-slate-200'
-                                                }`}
-                                            title={item.label}
-                                        >
-                                            {item.icon}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                    {/* Name */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">
+                            Nombre de la Carta *
+                        </label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder='Ej: Desayunos, Comidas, Carta de Vinos...'
+                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                            autoFocus
+                        />
+                    </div>
 
-                            {/* Name */}
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">
-                                    Nombre de la Carta *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Ej: Carta de Bebidas, Menú del Día..."
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-                                />
-                            </div>
-
-                            {/* Description */}
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">
-                                    Descripción <span className="text-slate-400 font-normal">(opcional)</span>
-                                </label>
-                                <textarea
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Una breve descripción de esta carta..."
-                                    rows={2}
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 resize-none"
-                                />
-                            </div>
-
-                            {/* Display Options */}
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-3">
-                                    Opciones de Visualización
-                                </label>
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={showPrices}
-                                            onChange={(e) => setShowPrices(e.target.checked)}
-                                            className="w-5 h-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
-                                        />
-                                        <span className="text-slate-700">Mostrar precios</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={showDescriptions}
-                                            onChange={(e) => setShowDescriptions(e.target.checked)}
-                                            className="w-5 h-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
-                                        />
-                                        <span className="text-slate-700">Mostrar descripciones</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={showImages}
-                                            onChange={(e) => setShowImages(e.target.checked)}
-                                            className="w-5 h-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
-                                        />
-                                        <span className="text-slate-700">Mostrar imágenes</span>
-                                    </label>
-                                </div>
-                            </div>
+                    {/* Type */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-3">
+                            Tipo de Carta
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {menuTypes.map((t) => {
+                                const IconComp = t.Icon;
+                                return (
+                                    <button
+                                        key={t.value}
+                                        onClick={() => setType(t.value)}
+                                        className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-all text-center ${type === t.value
+                                            ? "border-primary bg-primary/5 shadow-sm"
+                                            : "border-slate-100 hover:border-slate-200"
+                                            }`}
+                                    >
+                                        <div className={`w-9 h-9 rounded-lg ${t.bg} flex items-center justify-center`}>
+                                            <IconComp size={18} className={t.color} />
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-700">
+                                            {t.label}
+                                        </span>
+                                    </button>
+                                );
+                            })}
                         </div>
-                    )}
+                    </div>
 
-                    {step === 2 && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-slate-600">
-                                    Selecciona qué categorías se muestran en esta carta
+                    {/* Schedule Toggle */}
+                    <div>
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div>
+                                <p className="font-bold text-slate-900 text-sm">
+                                    Horario personalizado
                                 </p>
-                                <button
-                                    onClick={() => {
-                                        if (selectedCategories.length === categories.length) {
-                                            setSelectedCategories([]);
-                                        } else {
-                                            setSelectedCategories(categories.map(c => c.id));
-                                        }
-                                    }}
-                                    className="text-sm font-bold text-primary hover:underline"
-                                >
-                                    {selectedCategories.length === categories.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
-                                </button>
+                                <p className="text-xs text-slate-500">
+                                    Configura cuándo se activa esta carta
+                                </p>
                             </div>
+                            <button
+                                onClick={() =>
+                                    setScheduleType(
+                                        scheduleType === "all_day"
+                                            ? "scheduled"
+                                            : "all_day"
+                                    )
+                                }
+                                className={`relative w-12 h-7 rounded-full transition-colors ${scheduleType === "scheduled"
+                                    ? "bg-primary"
+                                    : "bg-slate-200"
+                                    }`}
+                            >
+                                <motion.div
+                                    animate={{
+                                        x: scheduleType === "scheduled" ? 20 : 2,
+                                    }}
+                                    className="absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm"
+                                />
+                            </button>
+                        </div>
+                    </div>
 
-                            {categories.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-slate-500">No tienes categorías creadas</p>
-                                    <Link href="/dashboard/menu/categories" className="text-primary font-bold text-sm hover:underline">
-                                        Crear categorías
-                                    </Link>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {categories.map((category) => (
+                    {/* Schedule Days */}
+                    {scheduleType === "scheduled" && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-2"
+                        >
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="text-sm font-bold text-slate-700">
+                                    Horarios por día
+                                </label>
+                                <span className="text-[11px] text-slate-400">
+                                    {Object.values(schedule).filter(d => d.enabled).length} días activos
+                                </span>
+                            </div>
+                            <div className="bg-slate-50 rounded-xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
+                                {weekDays.map((day) => (
+                                    <div
+                                        key={day.key}
+                                        className="flex items-center gap-3 px-4 py-2.5"
+                                    >
+                                        {/* Day toggle */}
                                         <button
-                                            key={category.id}
-                                            onClick={() => toggleCategory(category.id)}
-                                            className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${selectedCategories.includes(category.id)
-                                                ? 'border-primary bg-primary/5'
-                                                : 'border-slate-100 hover:border-slate-200'
+                                            onClick={() =>
+                                                updateDaySchedule(
+                                                    day.key,
+                                                    "enabled",
+                                                    !schedule[day.key]?.enabled
+                                                )
+                                            }
+                                            className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${schedule[day.key]?.enabled
+                                                ? "bg-primary"
+                                                : "bg-slate-200"
                                                 }`}
                                         >
-                                            <span className="text-2xl">{category.icon}</span>
-                                            <span className="font-bold text-slate-900">{category.name_es}</span>
-                                            {selectedCategories.includes(category.id) && (
-                                                <Check size={18} className="text-primary ml-auto" />
-                                            )}
+                                            <motion.div
+                                                animate={{ x: schedule[day.key]?.enabled ? 16 : 2 }}
+                                                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                                className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm"
+                                            />
                                         </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
 
-                    {step === 3 && (
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                                <div>
-                                    <p className="font-bold text-slate-900">Activación Programada</p>
-                                    <p className="text-sm text-slate-500">Esta carta se activa automáticamente según el horario</p>
-                                </div>
-                                <button
-                                    onClick={() => setScheduleEnabled(!scheduleEnabled)}
-                                    className={`relative w-12 h-7 rounded-full transition-colors ${scheduleEnabled ? 'bg-primary' : 'bg-slate-200'
-                                        }`}
-                                >
-                                    <motion.div
-                                        animate={{ x: scheduleEnabled ? 20 : 2 }}
-                                        className="absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm"
-                                    />
-                                </button>
+                                        <span className={`text-sm font-medium w-24 ${schedule[day.key]?.enabled ? "text-slate-800" : "text-slate-400"}`}>
+                                            {day.label}
+                                        </span>
+
+                                        {schedule[day.key]?.enabled ? (
+                                            <div className="flex items-center gap-1.5 ml-auto">
+                                                <input
+                                                    type="time"
+                                                    value={schedule[day.key]?.start || "09:00"}
+                                                    onChange={(e) =>
+                                                        updateDaySchedule(day.key, "start", e.target.value)
+                                                    }
+                                                    className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 w-[88px]"
+                                                />
+                                                <span className="text-slate-300 text-xs">—</span>
+                                                <input
+                                                    type="time"
+                                                    value={schedule[day.key]?.end || "23:00"}
+                                                    onChange={(e) =>
+                                                        updateDaySchedule(day.key, "end", e.target.value)
+                                                    }
+                                                    className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 w-[88px]"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-slate-300 ml-auto">Cerrado</span>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-
-                            {scheduleEnabled && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className="space-y-6"
-                                >
-                                    {/* Days */}
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-3">
-                                            Días de la semana
-                                        </label>
-                                        <div className="flex gap-2">
-                                            {weekDays.map((day) => (
-                                                <button
-                                                    key={day.value}
-                                                    onClick={() => toggleDay(day.value)}
-                                                    className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${scheduleDays.includes(day.value)
-                                                        ? 'bg-primary text-white'
-                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                        }`}
-                                                >
-                                                    {day.short}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Time */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">
-                                                Hora de inicio
-                                            </label>
-                                            <input
-                                                type="time"
-                                                value={scheduleStart}
-                                                onChange={(e) => setScheduleStart(e.target.value)}
-                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">
-                                                Hora de fin
-                                            </label>
-                                            <input
-                                                type="time"
-                                                value={scheduleEnd}
-                                                onChange={(e) => setScheduleEnd(e.target.value)}
-                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-                                            />
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </div>
+                        </motion.div>
                     )}
                 </div>
 
                 {/* Footer */}
                 <div className="p-6 bg-slate-50 flex justify-between flex-shrink-0">
-                    {step > 1 ? (
-                        <button
-                            onClick={() => setStep(step - 1)}
-                            className="px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
-                        >
-                            Atrás
-                        </button>
-                    ) : (
-                        <button
-                            onClick={onClose}
-                            className="px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                    )}
-
-                    {step < 3 ? (
-                        <button
-                            onClick={() => setStep(step + 1)}
-                            disabled={step === 1 && !name}
-                            className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
-                        >
-                            Siguiente
-                        </button>
-                    ) : (
-                        <button
-                            onClick={handleSubmit}
-                            disabled={!name || saving}
-                            className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                            {menu ? 'Guardar Cambios' : 'Crear Carta'}
-                        </button>
-                    )}
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!name.trim() || saving}
+                        className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {saving ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                Guardando...
+                            </>
+                        ) : (
+                            <>
+                                <Check size={16} />
+                                {menu ? "Guardar Cambios" : "Crear Carta"}
+                            </>
+                        )}
+                    </button>
                 </div>
             </motion.div>
         </motion.div>
     );
 }
-
-// Step Indicator Component
-function StepIndicator({ step, current, label }: { step: number; current: number; label: string }) {
-    return (
-        <div className={`flex items-center gap-2 ${current >= step ? 'text-primary' : 'text-slate-400'}`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${current > step ? 'bg-primary text-white' :
-                current === step ? 'bg-primary/10 text-primary' :
-                    'bg-slate-100 text-slate-400'
-                }`}>
-                {current > step ? <Check size={12} /> : step}
-            </span>
-            <span className="font-medium text-sm hidden sm:inline">{label}</span>
-        </div>
-    );
-}
-

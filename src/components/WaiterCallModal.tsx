@@ -16,7 +16,7 @@ interface WaiterCallModalProps {
     onClose: () => void;
     restaurantId: string;
     tableNumber: number | null;
-    theme?: any;
+    theme?: Record<string, string>;
 }
 
 const callOptions = [
@@ -155,7 +155,7 @@ export default function WaiterCallModal({
                     : customNote || null,
             };
 
-            await supabase.from('waiter_calls').insert(combinedCall);
+            await supabase.from('waiter_calls').insert(combinedCall as never);
 
             setSent(true);
             setTimeout(() => {
@@ -265,8 +265,8 @@ export default function WaiterCallModal({
                                                                 key={item.id}
                                                                 onClick={() => toggleItem(item.id)}
                                                                 className={`p-3 rounded-xl text-left transition-all ${selectedItems.includes(item.id)
-                                                                        ? 'bg-green-500 text-white shadow-lg scale-[1.02]'
-                                                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                                    ? 'bg-green-500 text-white shadow-lg scale-[1.02]'
+                                                                    : 'bg-white text-gray-700 hover:bg-gray-100'
                                                                     }`}
                                                             >
                                                                 <span className="text-lg mr-2">{item.emoji}</span>
@@ -314,8 +314,8 @@ export default function WaiterCallModal({
                                 onClick={handleSubmit}
                                 disabled={sending || (selectedItems.length === 0 && !customNote)}
                                 className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${selectedItems.length > 0 || customNote
-                                        ? 'bg-green-500 hover:bg-green-600 text-white'
-                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     }`}
                             >
                                 {sending ? (

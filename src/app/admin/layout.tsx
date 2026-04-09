@@ -84,10 +84,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            console.log("🔍 Checking admin access for user:", user?.id, user?.email);
-
             if (!user) {
-                console.log("❌ No user, redirecting to login");
                 router.replace("/login");
                 return;
             }
@@ -99,19 +96,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 .eq("user_id", user.id)
                 .single();
 
-            console.log("🔍 Admin query result:", { adminData, error });
-
             if (error || !adminData) {
-                console.error("❌ No admin access. Error:", error?.message);
-                console.log("User ID being checked:", user.id);
                 router.replace("/dashboard");
                 return;
             }
 
-            console.log("✅ Admin access granted:", adminData);
             setAdmin(adminData);
-        } catch (err) {
-            console.error("Error checking admin access:", err);
+        } catch {
             router.replace("/dashboard");
         } finally {
             setLoading(false);

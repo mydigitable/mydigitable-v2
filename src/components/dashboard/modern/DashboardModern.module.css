@@ -1,0 +1,339 @@
+/* Colores Modernos */
+.dashboardContainer {
+    --color-green: #22c55e;
+    --color-green-light: #dcfce7;
+    --color-blue: #3b82f6;
+    --color-blue-light: #dbeafe;
+    --color-orange: #f97316;
+    --color-orange-light: #ffedd5;
+    --color-purple: #a855f7;
+    --color-purple-light: #f3e8ff;
+    --color-text: #1f2937;
+    --color-text-secondary: #6b7280;
+    --bg-color: #f3f4f6;
+
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--bg-color);
+    min-height: 100vh;
+    padding: 2rem;
+    color: var(--color-text);
+    box-sizing: border-box;
+}
+
+.header {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.welcome {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #111827;
+}
+
+.date {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.headerActions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.planBadge {
+    background: #e5e7eb;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.upgradeLink {
+    color: var(--color-blue);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.iconButton {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.iconButton:hover {
+    background: #f9fafb;
+}
+
+/* Grids */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chartContainer {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    margin-bottom: 2rem;
+}
+
+.twoColumnGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.sectionTitle {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Cards */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.statHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.statIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.statValue {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.statSubtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.statTrend {
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.trendUp {
+    color: var(--color-green);
+}
+
+.trendDown {
+    color: var(--color-purple);
+}
+
+.greenBg {
+    background-color: var(--color-green-light);
+    color: var(--color-green);
+}
+
+.blueBg {
+    background-color: var(--color-blue-light);
+    color: var(--color-blue);
+}
+
+.orangeBg {
+    background-color: var(--color-orange-light);
+    color: var(--color-orange);
+}
+
+.purpleBg {
+    background-color: var(--color-purple-light);
+    color: var(--color-purple);
+}
+
+/* Quick Actions */
+.actionList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.actionButton {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-weight: 600;
+    color: #374151;
+}
+
+.actionButton:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+/* Notifications */
+.notificationList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.notificationItem {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid transparent;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.notifTime {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+/* Top Products */
+.productList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.productRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.productName {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.progressBarTrack {
+    flex: 2;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progressBarFill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+/* Recent Orders Table */
+.tableContainer {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-top: 2rem;
+}
+
+.tableHeader {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    background: #f9fafb;
+}
+
+.table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+}
+
+.statusPill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Mobile */
+@media (max-width: 1024px) {
+    .statsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .twoColumnGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboardContainer {
+        padding: 1rem;
+    }
+}

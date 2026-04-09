@@ -1,0 +1,72 @@
+.container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--tx);
+    margin: 0;
+}
+
+.progress {
+    font-size: 0.875rem;
+    color: var(--tx2);
+}
+
+.progressBar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progressFill {
+    height: 100%;
+    background: var(--green);
+    transition: width 0.3s;
+}
+
+.steps {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.step {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--tx2);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.step:hover {
+    border-color: var(--border2);
+}
+
+.stepDone {
+    background: var(--green-light);
+    border-color: var(--green-border);
+    color: var(--green);
+}

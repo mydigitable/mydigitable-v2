@@ -1,10 +1,11 @@
 "use client";
 
-import { Building2, Utensils, Coffee, Wine, Umbrella, Waves, Music, Truck, Store, Link2 } from "lucide-react";
+import { Building2, Utensils, Coffee, Wine, Umbrella, Truck, Music, Link2, Store } from "lucide-react";
 
 interface Props {
-    data: any;
-    onUpdate: (data: any) => void;
+    formData: any;
+    updateFormData: (data: any) => void;
+    restaurantName: string;
 }
 
 const businessTypes = [
@@ -13,103 +14,80 @@ const businessTypes = [
     { id: "cafe", icon: Coffee, label: "Cafetería", description: "Café, desayunos, meriendas" },
     { id: "beach_club", icon: Umbrella, label: "Beach Club", description: "Chiringuito, playa" },
     { id: "food_truck", icon: Truck, label: "Food Truck", description: "Comida sobre ruedas" },
-    { id: "events", icon: Music, label: "Eventos / Recitales", description: "Festivales, conciertos" },
+    { id: "hotel", icon: Building2, label: "Hotel", description: "Alojamiento con restaurante" },
+    { id: "event", icon: Music, label: "Eventos", description: "Festivales, conciertos" },
 ];
 
-function generateSlug(name: string): string {
-    return name
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-}
-
-export function Step1Business({ data, onUpdate }: Props) {
-    const handleNameChange = (name: string) => {
-        onUpdate({
-            name,
-            // Auto-generate slug if not manually edited
-            slug: data.slugManuallyEdited ? data.slug : generateSlug(name)
-        });
-    };
-
-    const handleSlugChange = (slug: string) => {
-        onUpdate({
-            slug: generateSlug(slug),
-            slugManuallyEdited: true
-        });
-    };
-
+export function Step1Business({ formData, updateFormData, restaurantName }: Props) {
     return (
-        <div className="space-y-8">
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-3xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Store className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-2">
+                    ¡Bienvenido!
+                </h2>
+                <p className="text-slate-500">
+                    Vamos a configurar tu negocio paso a paso
+                </p>
+            </div>
+
             {/* Nombre del negocio */}
-            <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 flex items-center gap-2">
-                    <Building2 size={12} />
-                    Nombre de tu negocio *
+            <div className="mb-8">
+                <label className="block text-sm font-black text-slate-900 mb-3">
+                    📝 Nombre de tu negocio
                 </label>
                 <input
                     type="text"
-                    value={data.name || ""}
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder="Ej: La Terraza de María"
-                    className="w-full h-14 px-5 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-primary transition-all outline-none font-bold text-slate-900 text-lg"
-                    autoFocus
+                    value={restaurantName}
+                    disabled
+                    className="w-full h-14 px-5 rounded-xl bg-slate-50 border-2 border-slate-200 font-bold text-slate-900 text-lg cursor-not-allowed"
                 />
-                {!data.name && (
-                    <p className="text-xs text-red-400 ml-1">El nombre es obligatorio</p>
-                )}
-            </div>
-
-            {/* Slug URL */}
-            <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 flex items-center gap-2">
-                    <Link2 size={12} />
-                    URL de tu menú
-                </label>
-                <div className="flex items-center bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
-                    <span className="px-4 text-slate-400 text-sm">menu.mydigitable.com/</span>
-                    <input
-                        type="text"
-                        value={data.slug || ""}
-                        onChange={(e) => handleSlugChange(e.target.value)}
-                        placeholder="tu-negocio"
-                        className="flex-1 h-14 pr-5 bg-transparent outline-none font-bold text-slate-900"
-                    />
-                </div>
-                <p className="text-xs text-slate-400 ml-1">
-                    Se genera automáticamente desde el nombre
+                <p className="text-xs text-slate-500 mt-2">
+                    Este nombre viene de tu registro. Podrás cambiarlo después en el dashboard.
                 </p>
             </div>
 
             {/* Tipo de negocio */}
-            <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
-                    Tipo de negocio
+            <div>
+                <label className="block text-sm font-black text-slate-900 mb-3">
+                    🏪 Tipo de negocio
                 </label>
+                <p className="text-sm text-slate-500 mb-4">
+                    Selecciona el que mejor describa tu negocio
+                </p>
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {businessTypes.map((type) => (
                         <button
                             key={type.id}
                             type="button"
-                            onClick={() => onUpdate({ business_type: type.id })}
-                            className={`p-4 rounded-2xl border-2 transition-all text-center ${data.business_type === type.id
-                                    ? "border-primary bg-primary/5"
-                                    : "border-slate-100 hover:border-slate-200 bg-white"
+                            onClick={() => updateFormData({ business_type: type.id })}
+                            className={`p-5 rounded-2xl border-2 transition-all text-center hover:scale-105 ${formData.business_type === type.id
+                                    ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+                                    : "border-slate-200 hover:border-primary bg-white"
                                 }`}
                         >
-                            <div className={`w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-2 ${data.business_type === type.id
+                            <div className={`w-14 h-14 mx-auto rounded-xl flex items-center justify-center mb-3 transition-all ${formData.business_type === type.id
                                     ? "bg-primary text-white"
                                     : "bg-slate-100 text-slate-400"
                                 }`}>
-                                <type.icon size={24} />
+                                <type.icon size={28} />
                             </div>
-                            <h4 className="font-bold text-slate-900 text-sm">{type.label}</h4>
-                            <p className="text-[10px] text-slate-400 mt-1">{type.description}</p>
+                            <h4 className="font-bold text-slate-900 text-sm mb-1">{type.label}</h4>
+                            <p className="text-xs text-slate-500">{type.description}</p>
                         </button>
                     ))}
                 </div>
+            </div>
+
+            {/* Info adicional */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-sm text-blue-700 font-medium text-center">
+                    💡 Podrás subir tu logo y personalizar la apariencia en los siguientes pasos
+                </p>
             </div>
         </div>
     );

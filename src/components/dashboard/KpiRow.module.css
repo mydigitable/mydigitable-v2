@@ -1,0 +1,122 @@
+.kpiRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.kpiHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.kpiIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.kpiValue {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--tx);
+    margin-bottom: 0.25rem;
+}
+
+.kpiLabel {
+    font-size: 0.875rem;
+    color: var(--tx2);
+    margin-bottom: 0.75rem;
+}
+
+.kpiSubtext {
+    font-size: 0.75rem;
+    color: var(--tx3);
+}
+
+.progressBar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progressFill {
+    height: 100%;
+    transition: width 0.3s;
+}
+
+.tagPositive,
+.tagNegative,
+.tagInfo,
+.tagWarning,
+.tagDanger,
+.tagSuccess,
+.tagNeutral {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.tagPositive {
+    background: #DCFCE7;
+    color: #15803D;
+}
+
+.tagNegative {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.tagInfo {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.tagWarning {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.tagDanger {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.tagSuccess {
+    background: #DCFCE7;
+    color: #15803D;
+}
+
+.tagNeutral {
+    background: var(--bg);
+    color: var(--tx3);
+}
+
+@media (max-width: 1024px) {
+    .kpiRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .kpiRow {
+        grid-template-columns: 1fr;
+    }
+}

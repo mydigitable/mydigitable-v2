@@ -28,7 +28,7 @@ interface KitchenOrder {
     order_type: 'dine_in' | 'takeaway' | 'delivery' | 'beach_service';
     status: string;
     table_number?: number;
-    customer_name: string | null;
+    guest_name: string | null;
     notes: string | null;
     created_at: string;
     items: {
@@ -90,7 +90,7 @@ export default function KitchenPage() {
                     order_number,
                     order_type,
                     status,
-                    customer_name,
+                    guest_name,
                     notes,
                     created_at,
                     order_items (
@@ -230,8 +230,8 @@ export default function KitchenPage() {
                     <button
                         onClick={() => setSoundEnabled(!soundEnabled)}
                         className={`p-3 rounded-xl transition-colors ${soundEnabled
-                                ? 'bg-primary/20 text-primary'
-                                : 'bg-slate-800 text-slate-500'
+                            ? 'bg-primary/20 text-primary'
+                            : 'bg-slate-800 text-slate-500'
                             }`}
                         title={soundEnabled ? 'Sonido ON' : 'Sonido OFF'}
                     >

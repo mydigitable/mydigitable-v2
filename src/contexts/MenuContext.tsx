@@ -7,25 +7,22 @@ interface Product {
     id: string;
     category_id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     name_en: string | null;
-    description_es: string | null;
+    description: string | Record<string, string> | null;
     price: number;
-    compare_price: number | null;
     image_url: string | null;
     is_available: boolean;
     is_featured: boolean;
     sort_order: number;
     allergens: string[] | null;
-    is_vegetarian: boolean;
-    is_vegan: boolean;
-    is_gluten_free: boolean;
+    dietary_tags: string[] | null;
 }
 
 interface Category {
     id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     icon: string;
     image_url: string | null;
     sort_order: number;
@@ -36,6 +33,7 @@ interface Category {
 interface MenuContextType {
     restaurant: any;
     categories: Category[];
+    designConfig: any;
     loading: boolean;
     refreshMenu: () => Promise<void>;
     showPreview: boolean;
@@ -48,6 +46,7 @@ const MenuContext = createContext<MenuContextType | undefined>(undefined);
 export function MenuProvider({ children }: { children: ReactNode }) {
     const [restaurant, setRestaurant] = useState<any>(null);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [designConfig, setDesignConfig] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showPreview, setShowPreview] = useState(true);
 
@@ -55,7 +54,6 @@ export function MenuProvider({ children }: { children: ReactNode }) {
 
     const loadData = async () => {
         try {
-            console.log("🔄 MenuContext: Refreshing data...");
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
@@ -69,9 +67,21 @@ export function MenuProvider({ children }: { children: ReactNode }) {
             if (!fetchedRestaurant) return;
             setRestaurant(fetchedRestaurant);
 
-            // Fetch categories with full products data
+            // Fetch design config with theme
+            const { data: configData } = await supabase
+                .from("restaurant_design_config")
+                .select(`
+                    *,
+                    selected_theme:menu_themes(*)
+                `)
+                .eq("restaurant_id", fetchedRestaurant.id)
+                .single();
+
+            setDesignConfig(configData || null);
+
+            // Fetch categories from menu_categories (the real table)
             const { data: categoriesData, error } = await supabase
-                .from("categories")
+                .from("menu_categories")
                 .select(`
                     *,
                     products:products(*)
@@ -81,11 +91,23 @@ export function MenuProvider({ children }: { children: ReactNode }) {
 
             if (error) console.error("❌ MenuContext Error:", error);
 
-            console.log(`✅ MenuContext: Loaded ${categoriesData?.length} categories`);
 
-            // Sort products within categories
-            const sortedCategories = (categoriesData || []).map((cat: any) => ({
-                ...cat,
+            // Map DB column names to interface and sort products
+            const extractName = (name: any): string => {
+                if (!name) return "Sin nombre";
+                if (typeof name === "string") return name;
+                if (typeof name === "object" && name.es) return name.es;
+                return String(name);
+            };
+
+            const sortedCategories: Category[] = (categoriesData || []).map((cat: any) => ({
+                id: cat.id,
+                restaurant_id: cat.restaurant_id,
+                name: extractName(cat.name),
+                icon: cat.icon || '',
+                image_url: cat.image_url || null,
+                sort_order: cat.sort_order ?? cat.display_order ?? 0,
+                is_active: cat.is_visible !== false,
                 products: (cat.products || []).sort((a: Product, b: Product) => a.sort_order - b.sort_order)
             }));
 
@@ -108,6 +130,7 @@ export function MenuProvider({ children }: { children: ReactNode }) {
         <MenuContext.Provider value={{
             restaurant,
             categories,
+            designConfig,
             loading,
             refreshMenu: loadData,
             showPreview,

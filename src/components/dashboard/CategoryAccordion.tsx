@@ -15,10 +15,11 @@ import {
     Image as ImageIcon
 } from "lucide-react";
 import * as Icons from "lucide-react";
+import { extractName } from "@/lib/utils";
 
 interface Product {
     id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     price: number;
     image_url: string | null;
     is_available: boolean;
@@ -27,7 +28,7 @@ interface Product {
 
 interface Category {
     id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     icon: string;
     products_count?: number;
     is_active: boolean;
@@ -42,13 +43,15 @@ interface CategoryAccordionProps {
     onDelete: () => void;
     onAddProduct: (categoryId: string) => void;
     onEditProduct: (product: Product) => void;
+    menuName?: string;
 }
 
 // Helper to get Icon component dynamically
-const getIcon = (iconName: string) => {
+const getIcon = (iconName: string | null | undefined) => {
+    if (!iconName) return null;
     // @ts-ignore
-    const Icon = Icons[iconName] || Icons.Utensils;
-    return Icon;
+    const Icon = Icons[iconName];
+    return Icon || null;
 };
 
 export function CategoryAccordion({
@@ -58,7 +61,8 @@ export function CategoryAccordion({
     onEdit,
     onDelete,
     onAddProduct,
-    onEditProduct
+    onEditProduct,
+    menuName
 }: CategoryAccordionProps) {
     const [isOpen, setIsOpen] = useState(false);
     const Icon = getIcon(category.icon);
@@ -75,13 +79,13 @@ export function CategoryAccordion({
                 </div>
 
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${category.is_active ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-400'}`}>
-                    <Icon size={20} />
+                    {Icon ? <Icon size={20} /> : <span className="text-sm font-bold">{(extractName(category.name) || '?').charAt(0).toUpperCase()}</span>}
                 </div>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         <h3 className={`font-bold text-sm ${category.is_active ? 'text-slate-900' : 'text-slate-500'}`}>
-                            {category.name_es}
+                            {extractName(category.name)}
                         </h3>
                         {!category.is_active && (
                             <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">
@@ -89,8 +93,13 @@ export function CategoryAccordion({
                             </span>
                         )}
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 flex items-center gap-2">
                         {products.length} productos
+                        {menuName && (
+                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">
+                                {menuName}
+                            </span>
+                        )}
                     </p>
                 </div>
 
@@ -136,7 +145,7 @@ export function CategoryAccordion({
                                         {/* Product Image */}
                                         <div className="w-10 h-10 rounded-md bg-slate-100 flex-shrink-0 overflow-hidden">
                                             {product.image_url ? (
-                                                <img src={product.image_url} alt={product.name_es} className="w-full h-full object-cover" />
+                                                <img src={product.image_url} alt={extractName(product.name)} className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-slate-300">
                                                     <ImageIcon size={16} />
@@ -146,7 +155,7 @@ export function CategoryAccordion({
 
                                         {/* Product Info */}
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-700 truncate">{product.name_es}</p>
+                                            <p className="text-sm font-semibold text-slate-700 truncate">{extractName(product.name)}</p>
                                             <p className="text-xs text-slate-500 font-medium">€{product.price.toFixed(2)}</p>
                                         </div>
 
@@ -174,7 +183,7 @@ export function CategoryAccordion({
                                 className="w-full flex items-center justify-center gap-2 py-3 mt-2 border-2 border-dashed border-primary/20 text-primary font-bold text-sm rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all"
                             >
                                 <Plus size={16} />
-                                Agregar Producto a {category.name_es}
+                                Agregar Producto a {extractName(category.name)}
                             </button>
                         </div>
                     </motion.div>

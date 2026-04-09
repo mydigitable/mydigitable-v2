@@ -1,0 +1,43 @@
+.premiumDashboard {
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tx-primary);
+}
+
+.premiumContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.splitGrid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.feedColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+.healthColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 1024px) {
+    .splitGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .premiumContainer {
+        padding: 1rem;
+    }
+}

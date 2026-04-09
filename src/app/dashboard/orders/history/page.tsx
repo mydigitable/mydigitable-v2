@@ -23,7 +23,7 @@ interface Order {
     order_number: string;
     status: string;
     order_type: string;
-    customer_name: string | null;
+    guest_name: string | null;
     total: number;
     created_at: string;
     completed_at: string | null;
@@ -52,7 +52,9 @@ export default function OrdersHistoryPage() {
             .from("restaurants")
             .select("id")
             .eq("owner_id", user.id)
-            .order("created_at", { ascending: true }); const restaurantData = restaurants?.[0] || null;
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .single();
 
         if (restaurant) {
             let query = supabase
@@ -82,7 +84,7 @@ export default function OrdersHistoryPage() {
 
     const filteredOrders = orders.filter(o =>
         o.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        o.guest_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const paginatedOrders = filteredOrders.slice(
@@ -140,8 +142,8 @@ export default function OrdersHistoryPage() {
                             key={range}
                             onClick={() => setDateRange(range)}
                             className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors ${dateRange === range
-                                    ? 'bg-primary text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-primary text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
                             {range === 'today' ? 'Hoy' : range === 'week' ? 'Semana' : range === 'month' ? 'Mes' : 'Todo'}
@@ -181,7 +183,7 @@ export default function OrdersHistoryPage() {
                                             <span className="font-bold text-slate-900">#{order.order_number}</span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600">
-                                            {order.customer_name || 'Cliente anónimo'}
+                                            {order.guest_name || 'Cliente anónimo'}
                                         </td>
                                         <td className="px-6 py-4 font-bold text-slate-900">
                                             {order.total?.toFixed(2)}€

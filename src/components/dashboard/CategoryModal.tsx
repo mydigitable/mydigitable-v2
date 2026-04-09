@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X, Check, Loader2, UploadCloud, Trash2, ChevronRight, Utensils, Pizza, Beef, Fish, Sandwich, Soup, Salad, Cake, IceCream, Coffee, Beer, Wine, Carrot, Grape, Flame, Sparkles, Leaf, Croissant } from "lucide-react";
+import { X, Check, Loader2, UploadCloud, Trash2, ChevronRight, Utensils, Pizza, Beef, Fish, Sandwich, Soup, Salad, Cake, IceCream, Coffee, Beer, Wine, Carrot, Grape, Flame, Sparkles, Leaf, Croissant, BookOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { extractName } from "@/lib/utils";
 
 // --- CONSTANTS ---
 const IconMap: { [key: string]: any } = {
@@ -30,28 +31,40 @@ const CATEGORY_PRESETS = [
 interface Category {
     id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string | Record<string, string>;
     name_en: string | null;
-    description_es: string | null;
-    icon: string;
+    description: string | Record<string, string> | null;
+    icon: string | null;
     image_url: string | null;
     sort_order: number;
+    is_active: boolean;
+    menu_id?: string | null;
+}
+
+interface MenuInfo {
+    id: string;
+    name: string;
     is_active: boolean;
 }
 
 export function CategoryModal({
     category,
+    menus = [],
     onSave,
     onClose,
 }: {
     category: Category | null;
-    onSave: (data: Partial<Category>) => void;
+    menus?: MenuInfo[];
+    onSave: (data: Partial<Category> & { menu_ids?: string[] }) => void;
     onClose: () => void;
 }) {
-    const [nameEs, setNameEs] = useState(category?.name_es || '');
-    const [description, setDescription] = useState(category?.description_es || '');
-    const [selectedIcon, setSelectedIcon] = useState(category?.icon && IconMap[category.icon] ? category.icon : 'Utensils');
+    const [nameEs, setNameEs] = useState(extractName(category?.name) || '');
+    const [description, setDescription] = useState(extractName(category?.description) || '');
+    const [selectedIcon, setSelectedIcon] = useState(category?.icon && IconMap[category.icon] ? category.icon : '');
     const [imageUrl, setImageUrl] = useState(category?.image_url || '');
+    const [selectedMenuIds, setSelectedMenuIds] = useState<string[]>(
+        category?.menu_id ? [category.menu_id] : []
+    );
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [dragActive, setDragActive] = useState(false);
@@ -62,9 +75,17 @@ export function CategoryModal({
         '🍰': Cake, '☕': Coffee, '🍦': IceCream, '🐟': Fish, '🥩': Beef
     };
 
-    const IconComponent = IconMap[selectedIcon] || EmojiMap[selectedIcon] || Utensils;
+    const IconComponent = selectedIcon ? (IconMap[selectedIcon] || EmojiMap[selectedIcon] || Utensils) : null;
 
     const supabase = createClient();
+
+    const toggleMenu = (menuId: string) => {
+        setSelectedMenuIds(prev =>
+            prev.includes(menuId)
+                ? prev.filter(id => id !== menuId)
+                : [...prev, menuId]
+        );
+    };
 
     const handleFileUpload = async (file: File) => {
         if (!file) return;
@@ -84,13 +105,13 @@ export function CategoryModal({
             const filePath = `categories/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
-                .from('images')
+                .from('product-images')
                 .upload(filePath, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage
-                .from('images')
+                .from('product-images')
                 .getPublicUrl(filePath);
 
             setImageUrl(publicUrl);
@@ -109,10 +130,11 @@ export function CategoryModal({
         }
         setSaving(true);
         await onSave({
-            name_es: nameEs,
-            description_es: description,
-            icon: selectedIcon,
+            name: { es: nameEs },
+            description: description ? { es: description } : null,
+            icon: selectedIcon || null,
             image_url: imageUrl,
+            menu_ids: selectedMenuIds,
         });
         setSaving(false);
     };
@@ -181,6 +203,50 @@ export function CategoryModal({
                                 </datalist>
                             </div>
 
+                            {/* Menu Assignment */}
+                            {menus.length > 0 && (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+                                        Asignar a Cartas
+                                    </label>
+                                    <div className="space-y-2">
+                                        {menus.map((menu) => (
+                                            <button
+                                                key={menu.id}
+                                                onClick={() => toggleMenu(menu.id)}
+                                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all text-left ${selectedMenuIds.includes(menu.id)
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-slate-100 hover:border-slate-200'
+                                                    }`}
+                                            >
+                                                <div className={`w-5 h-5 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors ${selectedMenuIds.includes(menu.id)
+                                                    ? 'bg-primary border-primary'
+                                                    : 'border-slate-300'
+                                                    }`}>
+                                                    {selectedMenuIds.includes(menu.id) && (
+                                                        <Check size={12} className="text-white" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-sm font-medium text-slate-800">{menu.name}</span>
+                                                </div>
+                                                {!menu.is_active && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded font-bold uppercase">
+                                                        Inactiva
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 mt-1.5">
+                                        {selectedMenuIds.length === 0
+                                            ? 'Sin carta asignada — la categoría se mostrará en todas'
+                                            : `${selectedMenuIds.length} carta${selectedMenuIds.length !== 1 ? 's' : ''} seleccionada${selectedMenuIds.length !== 1 ? 's' : ''}`
+                                        }
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icono</label>
                                 <div className="grid grid-cols-6 gap-2 p-3 border border-slate-100 rounded-lg bg-slate-50/50">
@@ -189,7 +255,7 @@ export function CategoryModal({
                                         return (
                                             <button
                                                 key={iconKey}
-                                                onClick={() => setSelectedIcon(iconKey)}
+                                                onClick={() => setSelectedIcon(selectedIcon === iconKey ? '' : iconKey)}
                                                 className={`aspect-square flex items-center justify-center rounded-md transition-all ${selectedIcon === iconKey
                                                     ? 'bg-slate-900 text-white shadow-md scale-105'
                                                     : 'hover:bg-white hover:shadow-sm text-slate-500'
@@ -201,6 +267,9 @@ export function CategoryModal({
                                         );
                                     })}
                                 </div>
+                                {!selectedIcon && (
+                                    <p className="text-[11px] text-slate-400 mt-1.5">Sin icono seleccionado — puedes dejarlo vacío</p>
+                                )}
                             </div>
 
                             <div>
@@ -255,7 +324,7 @@ export function CategoryModal({
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Vista Previa</label>
                                 <div className="p-4 border border-slate-200 rounded-xl bg-white shadow-sm flex items-center gap-4 opacity-80 pointer-events-none select-none grayscale-[0.2]">
                                     <div className="w-12 h-12 rounded-lg bg-slate-900 text-white flex items-center justify-center">
-                                        <IconComponent size={24} />
+                                        {IconComponent ? <IconComponent size={24} /> : <span className="text-lg font-bold">{(nameEs || 'C').charAt(0).toUpperCase()}</span>}
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="font-bold text-slate-900">{nameEs || 'Nombre de categoría'}</h3>
@@ -264,6 +333,24 @@ export function CategoryModal({
                                     <ChevronRight size={16} className="text-slate-300" />
                                 </div>
                             </div>
+
+                            {/* Selected menus summary */}
+                            {selectedMenuIds.length > 0 && (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Aparecerá en</label>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {selectedMenuIds.map(id => {
+                                            const menu = menus.find(m => m.id === id);
+                                            return menu ? (
+                                                <span key={id} className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-lg flex items-center gap-1.5">
+                                                    <BookOpen size={12} />
+                                                    {menu.name}
+                                                </span>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

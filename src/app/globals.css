@@ -1,22 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* =============================================
+   MYDIGITABLE THEME SYSTEM - CSS VARIABLES
+   ============================================= */
+
+:root {
+  /* Se sobreescriben por JavaScript con applyThemeToDocument() */
+  --color-primary: 22 163 74;
+  --color-primary-text: 255 255 255;
+  --color-bg: 250 250 249;
+  --color-surface: 255 255 255;
+  --color-border: 231 229 228;
+  --color-text: 28 25 23;
+  --color-text-secondary: 120 113 108;
+  --color-text-muted: 168 162 158;
+
+  --font-heading: 'DM Sans', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-price: 'DM Sans', sans-serif;
+  --font-size-base: 16px;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 12px 32px -4px rgb(0 0 0 / 0.1);
+
+  --header-bg: rgb(255 255 255);
+  --header-text: 28 25 23;
+  --category-active-bg: 22 163 74;
+  --category-active-text: 255 255 255;
+  --cart-bg: 22 163 74;
+  --cart-text: 255 255 255;
+
+  /* Dashboard Premium Variables (Stripe/Linear inspired) */
+  --bg: #F9FAFB;
+  /* Gray 50 - Cleaner background */
+  --surface: #FFFFFF;
+  --surface-hover: #F9FAFB;
+  --border: #E5E7EB;
+  /* Gray 200 */
+  --border-strong: #D1D5DB;
+  /* Gray 300 */
+
+  /* Semantic Colors */
+  --primary: #4F46E5;
+  /* Indigo 600 - Modern SaaS primary */
+  --primary-light: #EEF2FF;
+  /* Indigo 50 */
+  --success: #10B981;
+  /* Emerald 500 */
+  --success-light: #ECFDF5;
+  /* Emerald 50 */
+  --warning: #F59E0B;
+  /* Amber 500 */
+  --warning-light: #FFFBEB;
+  /* Amber 50 */
+  --danger: #EF4444;
+  /* Red 500 */
+  --danger-light: #FEF2F2;
+  /* Red 50 */
+
+  /* Text Colors */
+  --tx-primary: #111827;
+  /* Gray 900 */
+  --tx-secondary: #6B7280;
+  /* Gray 500 */
+  --tx-tertiary: #9CA3AF;
+  /* Gray 400 */
+
+  /* Components */
+  --radius: 12px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] {
+  --bg: #09090B;
+  /* Zinc 950 */
+  --surface: #18181B;
+  /* Zinc 900 */
+  --surface-hover: #27272A;
+  /* Zinc 800 */
+  --border: #27272A;
+  /* Zinc 800 */
+  --border-strong: #3F3F46;
+  /* Zinc 700 */
+
+  --primary: #6366F1;
+  /* Indigo 500 */
+  --primary-light: rgba(99, 102, 241, 0.1);
+
+  --tx-primary: #F9FAFB;
+  /* Gray 50 */
+  --tx-secondary: #9CA3AF;
+  /* Gray 400 */
+  --tx-tertiary: #6B7280;
+  /* Gray 500 */
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Clases utilitarias que usan las variables */
+.theme-bg {
+  background-color: rgb(var(--color-bg));
+}
+
+.theme-surface {
+  background-color: rgb(var(--color-surface));
+}
+
+.theme-text {
+  color: rgb(var(--color-text));
+}
+
+.theme-text-secondary {
+  color: rgb(var(--color-text-secondary));
+}
+
+.theme-text-muted {
+  color: rgb(var(--color-text-muted));
+}
+
+.theme-primary {
+  background-color: rgb(var(--color-primary));
+  color: rgb(var(--color-primary-text));
+}
+
+.theme-border {
+  border-color: rgb(var(--color-border));
+}
+
+.theme-shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.theme-shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.theme-font-heading {
+  font-family: var(--font-heading);
+}
+
+.theme-font-body {
+  font-family: var(--font-body);
+}
+
+.theme-font-size {
+  font-size: var(--font-size-base);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 60 30% 99%;
-    --foreground: 0 0% 9%;
+    --background: 120 20% 98%;
+    --foreground: 0 0% 5%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --primary: 142 71% 45%;
+    --card-foreground: 0 0% 5%;
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 142 30% 95%;
-    --secondary-foreground: 142 71% 30%;
-    --accent: 48 96% 53%;
-    --accent-foreground: 48 96% 10%;
-    --muted: 60 10% 96%;
-    --muted-foreground: 0 0% 45%;
-    --border: 0 0% 92%;
+    --secondary: 142 30% 92%;
+    --secondary-foreground: 142 76% 25%;
+    --accent: 45 93% 47%;
+    --accent-foreground: 45 93% 5%;
+    --muted: 120 10% 95%;
+    --muted-foreground: 0 0% 40%;
+    --border: 120 10% 88%;
   }
 }
 
@@ -99,9 +261,12 @@
   }
 
   @keyframes gradient-shift {
-    0%, 100% {
+
+    0%,
+    100% {
       background-position: 0% 50%;
     }
+
     50% {
       background-position: 100% 50%;
     }
@@ -112,10 +277,13 @@
   }
 
   @keyframes pulse-glow {
-    0%, 100% {
+
+    0%,
+    100% {
       opacity: 0.6;
       transform: scale(1);
     }
+
     50% {
       opacity: 1;
       transform: scale(1.05);

@@ -154,7 +154,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
         const supabase = createClient();
 
         const { data: categoriesData } = await supabase
-            .from('categories')
+            .from('menu_categories')
             .select('*, products(*)')
             .eq('restaurant_id', restaurant.id)
             .order('sort_order');
@@ -334,7 +334,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
         const supabase = createClient();
         const { data: category, error } = await supabase
-            .from('categories')
+            .from('menu_categories')
             .insert({ ...data, restaurant_id: restaurant.id })
             .select()
             .single();
@@ -351,7 +351,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
     updateCategory: async (id, data) => {
         const supabase = createClient();
         const { error } = await supabase
-            .from('categories')
+            .from('menu_categories')
             .update(data)
             .eq('id', id);
 
@@ -369,7 +369,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
     deleteCategory: async (id) => {
         const supabase = createClient();
         const { error } = await supabase
-            .from('categories')
+            .from('menu_categories')
             .delete()
             .eq('id', id);
 
@@ -388,7 +388,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
         const supabase = createClient();
 
         const updates = ids.map((id, index) =>
-            supabase.from('categories').update({ sort_order: index }).eq('id', id)
+            supabase.from('menu_categories').update({ sort_order: index }).eq('id', id)
         );
 
         await Promise.all(updates);
@@ -558,7 +558,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
     cancelReservation: async (id, reason) => {
         return get().updateReservation(id, {
-            status: 'cancelled',
+            status: 'canceled',
             cancelled_at: new Date().toISOString(),
             cancellation_reason: reason,
         });

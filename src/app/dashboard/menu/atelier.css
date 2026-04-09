@@ -1,0 +1,245 @@
+/* =============================================
+   MENU ATELIER - DESIGN TOKENS
+   Integrated with dashboard design system
+   ============================================= */
+
+:root {
+    /* Color Tokens - Dashboard Integration */
+    --atelier-bg: #F9FAFB;
+    /* Dashboard background (slate-50) */
+    --atelier-surface: #FFFFFF;
+    /* Card backgrounds */
+    --atelier-surface2: #FFFFFF;
+    /* Primary surface */
+    --atelier-ink: #111827;
+    /* Primary text (gray-900) */
+    --atelier-ink2: #6B7280;
+    /* Secondary text (gray-500) */
+    --atelier-ink3: #9CA3AF;
+    /* Tertiary text (gray-400) */
+    --atelier-border: #E5E7EB;
+    /* Borders (gray-200) */
+    --atelier-accent: #10B981;
+    /* Emerald green - primary color */
+    --atelier-accent-l: #ECFDF5;
+    /* Emerald-50 - active backgrounds */
+    --atelier-gold: #F59E0B;
+    /* Amber - AI indicators */
+    --atelier-gold-l: #FFFBEB;
+    /* Amber-50 */
+    --atelier-red: #EF4444;
+    /* Red-500 - destructive actions */
+}
+
+/* Typography - All Poppins (from Tailwind) */
+/* Use Tailwind classes: font-sans, font-medium, font-semibold, font-bold */
+
+/* Animations */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideR {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes typewriter {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+/* Utility Classes */
+.atelier-card {
+    background: var(--atelier-surface2);
+    border: 1px solid var(--atelier-border);
+    border-radius: 14px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.atelier-card:hover {
+    box-shadow: 0 4px 12px rgba(26, 21, 16, 0.08);
+    transform: translateY(-2px);
+}
+
+.atelier-btn-primary {
+    background: var(--atelier-accent);
+    color: white;
+    border-radius: 10px;
+    padding: 0.625rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.atelier-btn-primary:hover {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(43, 77, 53, 0.3);
+}
+
+.atelier-btn-ghost {
+    background: transparent;
+    border: 1px solid var(--atelier-border);
+    border-radius: 10px;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    color: var(--atelier-ink);
+}
+
+.atelier-btn-ghost:hover {
+    border-color: var(--atelier-ink3);
+    background: var(--atelier-surface);
+}
+
+.atelier-input {
+    background: var(--atelier-surface2);
+    border: 1px solid var(--atelier-border);
+    border-radius: 10px;
+    padding: 0.625rem 0.875rem;
+    font-family: var(--font-jost), 'Jost', sans-serif;
+    color: var(--atelier-ink);
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.atelier-input:focus {
+    outline: none;
+    border-color: var(--atelier-accent);
+    box-shadow: 0 0 0 3px var(--atelier-accent-l);
+}
+
+.atelier-input::placeholder {
+    color: var(--atelier-ink3);
+}
+
+.atelier-strip-active {
+    height: 3px;
+    background: var(--atelier-accent);
+    border-radius: 3px 3px 0 0;
+}
+
+.atelier-strip-inactive {
+    height: 3px;
+    background: var(--atelier-ink3);
+    border-radius: 3px 3px 0 0;
+}
+
+/* Slide Panel Overlay */
+.atelier-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 21, 16, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    animation: fadeIn 0.25s ease;
+}
+
+.atelier-slide-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 440px;
+    background: var(--atelier-surface2);
+    box-shadow: -4px 0 24px rgba(26, 21, 16, 0.12);
+    z-index: 51;
+    animation: slideR 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+/* Toggle Switch */
+.atelier-toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: var(--atelier-ink3);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.atelier-toggle.active {
+    background: var(--atelier-accent);
+}
+
+.atelier-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.atelier-toggle.active .atelier-toggle-knob {
+    transform: translateX(18px);
+}
+
+/* Grid Stagger Animation */
+.atelier-grid-item {
+    animation: fadeUp 0.3s ease both;
+}
+
+/* AI State Indicator */
+.atelier-ai-pulse {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--atelier-gold);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.atelier-ai-border {
+    border-color: var(--atelier-gold) !important;
+    box-shadow: 0 0 0 3px var(--atelier-gold-l) !important;
+}

@@ -1,222 +1,284 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import {
     Plus,
     Search,
-    Filter,
     Edit3,
     Trash2,
     Eye,
     EyeOff,
-    Check,
-    X,
     Loader2,
     Image as ImageIcon,
-    Euro,
-    Leaf,
-    AlertTriangle,
     Star,
     ChevronDown,
     Grid3X3,
     List,
     Copy,
     MoreVertical,
-    Smartphone
+    Package,
+    Tag
 } from "lucide-react";
-import Link from "next/link";
-import { ProductModal } from "@/components/dashboard/ProductModal";
+import { CreateProductModalPro } from "@/app/dashboard/menu/components/CreateProductModalPro";
+import { CategoryModal } from "@/components/dashboard/CategoryModal";
+import {
+    toggleProductAvailable,
+    toggleProductVisible,
+    duplicateProduct as duplicateProductAction,
+    deleteProduct as deleteProductAction,
+    createCategory,
+} from "@/app/actions/menu";
 import { useMenu } from "@/contexts/MenuContext";
+import { extractName } from "@/lib/utils";
 
 // --- INTERFACES ---
-// (We should nominally import these, but keeping inline for stability as per previous pattern)
 interface Product {
     id: string;
     category_id: string;
     restaurant_id: string;
-    name_es: string;
+    name: string;
     name_en: string | null;
-    description_es: string | null;
+    description: string | null;
     price: number;
-    compare_price: number | null;
     image_url: string | null;
-    is_vegetarian: boolean;
-    is_vegan: boolean;
-    is_gluten_free: boolean;
     allergens: string[] | null;
+    dietary_tags: string[] | null;
     is_available: boolean;
     is_featured: boolean;
     sort_order: number;
-    category?: {
-        name_es: string;
-        icon: string;
-    };
+    category_name?: string;
 }
 
 interface Category {
     id: string;
-    name_es: string;
+    name: string;
     icon: string;
 }
 
+interface MenuInfo {
+    id: string;
+    name: string;
+    is_active: boolean;
+}
+
+// (extractName imported from @/lib/utils)
+
 export default function ProductsPage() {
-    // --- CONTEXT ---
-    const { categories, restaurant, loading, refreshMenu, showPreview, setShowPreview } = useMenu();
+    // --- STATE ---
+    const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const [showProModal, setShowProModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const searchParams = useSearchParams();
     const categoryFilter = searchParams.get('category');
-
-    // --- STATE ---
-    // We derive products from context to ensure sidebar remains in sync!
-    const products = categories.flatMap(c =>
-        (c.products || []).map(p => ({ ...p, category: { name_es: c.name_es, icon: c.icon } }))
-    );
-
-    const [saving, setSaving] = useState(false);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryFilter);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [menus, setMenus] = useState<MenuInfo[]>([]);
 
     const supabase = createClient();
+    const { refreshMenu } = useMenu();
 
     useEffect(() => {
         setSelectedCategory(categoryFilter);
     }, [categoryFilter]);
 
-    // --- HANDLERS ---
-
-    const handleSaveProduct = async (data: Partial<Product>) => {
-        if (!restaurant) return;
-
-        setSaving(true);
+    // --- DATA LOADING (read-only) ---
+    const loadData = useCallback(async () => {
         try {
-            console.log("Saving product...", data);
-            let error;
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
 
-            if (editingProduct) {
-                const { error: updateError } = await supabase
-                    .from("products")
-                    .update({
-                        ...data,
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq("id", editingProduct.id);
-                error = updateError;
-            } else {
-                const { error: insertError } = await supabase
-                    .from("products")
-                    .insert({
-                        restaurant_id: restaurant.id,
-                        ...data,
-                        sort_order: products.length,
-                        is_available: true,
-                    });
-                error = insertError;
-            }
+            const { data: restaurantData } = await supabase
+                .from("restaurants")
+                .select("*")
+                .eq("owner_id", user.id)
+                .limit(1);
 
-            if (error) {
-                console.error("Supabase Error:", error);
-                throw error;
-            }
+            const rest = restaurantData?.[0];
+            if (!rest) return;
 
-            console.log("Product saved successfully. Refreshing menu...");
-            await refreshMenu(); // Updates Context -> Updates Sidebar & List
-            setShowAddModal(false);
-            setEditingProduct(null);
-        } catch (err: any) {
-            console.error("Error saving product:", err);
-            alert(`Error al guardar: ${err.message || 'Error desconocido'}`);
+            // Load ALL products directly
+            const { data: productsData, error: prodError } = await supabase
+                .from("products")
+                .select("*")
+                .eq("restaurant_id", rest.id)
+                .order("sort_order");
+
+            if (prodError) console.error("Error loading products:", prodError);
+
+            // Load categories for filter dropdown and category names
+            const { data: categoriesData, error: catError } = await supabase
+                .from("menu_categories")
+                .select("id, name, icon, is_visible")
+                .eq("restaurant_id", rest.id)
+                .order("sort_order");
+
+            if (catError) console.error("Error loading categories:", catError);
+
+            const mappedCategories: Category[] = (categoriesData || []).map((cat: Record<string, unknown>) => ({
+                id: cat.id as string,
+                name: extractName(cat.name as string | Record<string, string>),
+                icon: (cat.icon as string) || '',
+            }));
+            setCategories(mappedCategories);
+
+            // Load menus for category modal
+            const { data: menusData } = await supabase
+                .from("menus")
+                .select("id, name, is_active")
+                .eq("restaurant_id", rest.id)
+                .order("display_order");
+            setMenus((menusData || []) as MenuInfo[]);
+
+            // Build category name map
+            const catMap: Record<string, string> = {};
+            mappedCategories.forEach(c => { catMap[c.id] = c.name; });
+
+            // Map products with category name
+            const mappedProducts: Product[] = (productsData || []).map((p: Record<string, unknown>) => ({
+                ...p,
+                name: extractName(p.name as string | Record<string, string>),
+                description: extractName(p.description as string | Record<string, string>),
+                is_featured: false,
+                sort_order: (p.display_order as number) || (p.sort_order as number) || 0,
+                category_name: catMap[p.category_id as string] || 'Sin categoría',
+            })) as Product[];
+
+            setProducts(mappedProducts);
+        } catch (err) {
+            console.error("Error loading data:", err);
         } finally {
-            setSaving(false);
+            setLoading(false);
         }
-    };
+    }, []);
 
-    const toggleProductAvailable = async (productId: string, isAvailable: boolean) => {
-        const { error } = await supabase
-            .from("products")
-            .update({ is_available: isAvailable })
-            .eq("id", productId);
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
-        if (error) {
-            console.error("Error toggling availability:", error);
+    // --- HANDLERS (using server actions) ---
+    const handleToggleAvailable = async (productId: string) => {
+        // Optimistic update
+        setProducts(prev => prev.map(p =>
+            p.id === productId ? { ...p, is_available: !p.is_available } : p
+        ));
+
+        const result = await toggleProductAvailable(productId);
+        if (!result.success) {
+            // Revert on failure
+            setProducts(prev => prev.map(p =>
+                p.id === productId ? { ...p, is_available: !p.is_available } : p
+            ));
             alert("Error al actualizar estado");
-            return;
         }
         refreshMenu();
     };
 
-    const toggleProductFeatured = async (productId: string, isFeatured: boolean) => {
-        const { error } = await supabase
-            .from("products")
-            .update({ is_featured: isFeatured })
-            .eq("id", productId);
+    const handleToggleFeatured = async (productId: string) => {
+        setProducts(prev => prev.map(p =>
+            p.id === productId ? { ...p, is_featured: !p.is_featured } : p
+        ));
 
-        if (error) {
-            console.error("Error toggling featured:", error);
+        const result = await toggleProductVisible(productId);
+        if (!result.success) {
+            setProducts(prev => prev.map(p =>
+                p.id === productId ? { ...p, is_featured: !p.is_featured } : p
+            ));
             alert("Error al actualizar destacado");
-            return;
         }
         refreshMenu();
     };
 
-    const duplicateProduct = async (product: Product) => {
-        const { error } = await supabase.from("products").insert({
-            restaurant_id: restaurant.id,
-            category_id: product.category_id,
-            name_es: `${product.name_es} (copia)`,
-            name_en: product.name_en,
-            description_es: product.description_es,
-            price: product.price,
-            // compare_price: product.compare_price, // Removed: Column missing in DB
-            image_url: product.image_url,
-            is_vegetarian: product.is_vegetarian,
-            is_vegan: product.is_vegan,
-            is_gluten_free: product.is_gluten_free,
-            allergens: product.allergens,
-            sort_order: products.length,
-            is_available: false,
-        });
-
-        if (error) {
-            console.error("Error duplicating:", error);
-            alert(`Error al duplicar: ${error.message}`);
+    const handleDuplicate = async (productId: string) => {
+        const result = await duplicateProductAction(productId);
+        if (!result.success) {
+            alert(`Error al duplicar: ${result.error}`);
             return;
+        }
+        await loadData();
+        refreshMenu();
+    };
+
+    const handleDelete = async (productId: string) => {
+        if (!confirm('¿Eliminar este producto permanentemente?')) return;
+
+        // Optimistic removal
+        setProducts(prev => prev.filter(p => p.id !== productId));
+
+        const result = await deleteProductAction(productId);
+        if (!result.success) {
+            alert(`Error al eliminar: ${result.error}`);
+            await loadData();
         }
         refreshMenu();
     };
 
-    const deleteProduct = async (productId: string) => {
-        if (!confirm('¿Eliminar este producto?')) return;
-        const { error } = await supabase.from("products").delete().eq("id", productId);
-
-        if (error) {
-            console.error("Error deleting:", error);
-            alert(`Error al eliminar: ${error.message}`);
-            return;
-        }
-        refreshMenu();
-    };
-
-    // --- RENDER ---
-
+    // --- FILTERING ---
     const filteredProducts = products.filter(product => {
-        // @ts-ignore
         if (selectedCategory && product.category_id !== selectedCategory) return false;
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             return (
-                product.name_es.toLowerCase().includes(query) ||
-                product.description_es?.toLowerCase().includes(query)
+                product.name.toLowerCase().includes(query) ||
+                product.description?.toLowerCase().includes(query) ||
+                product.category_name?.toLowerCase().includes(query)
             );
         }
         return true;
     });
 
+    // --- CATEGORY CREATION HANDLER ---
+    const handleSaveCategory = async (data: { name?: string | Record<string, string>; description?: string | Record<string, string> | null; menu_ids?: string[] }) => {
+        try {
+            const menuIds = data.menu_ids || [];
+            if (menuIds.length === 0) {
+                const result = await createCategory({
+                    menu_id: null,
+                    name: extractName(data.name) || '',
+                    description: extractName(data.description) || undefined,
+                    is_visible: true,
+                });
+                if (!result.success) {
+                    alert(`Error: ${result.error}`);
+                    return;
+                }
+            } else {
+                for (const menuId of menuIds) {
+                    const result = await createCategory({
+                        menu_id: menuId,
+                        name: extractName(data.name) || '',
+                        description: extractName(data.description) || undefined,
+                        is_visible: true,
+                    });
+                    if (!result.success) {
+                        alert(`Error: ${result.error}`);
+                        return;
+                    }
+                }
+            }
+            await loadData();
+            refreshMenu();
+            setShowCategoryModal(false);
+        } catch (err) {
+            console.error('Error saving category:', err);
+            alert('Error al guardar la categoría');
+        }
+    };
+
+    // --- STATS ---
+    const totalProducts = products.length;
+    const availableProducts = products.filter(p => p.is_available).length;
+    const featuredProducts = products.filter(p => p.is_featured).length;
+
+    // --- RENDER ---
     if (loading) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
@@ -226,35 +288,64 @@ export default function ProductsPage() {
     }
 
     return (
-        <div className="p-6 lg:p-8">
+        <div className="p-6 lg:p-8 max-w-[1400px] mx-auto">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900">Productos</h1>
-                    <p className="text-sm text-slate-500">
-                        {products.length} productos en tu menú
+                    <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                        <Package size={28} className="text-primary" />
+                        Todos los Productos
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-1">
+                        Gestiona todos los productos de tu restaurante en un solo lugar
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* TOGGLE PREVIEW BUTTON */}
                     <button
-                        onClick={() => setShowPreview(!showPreview)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all border ${showPreview ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                        onClick={() => setShowCategoryModal(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 hover:border-slate-300 bg-white text-slate-700 rounded-xl font-medium text-sm transition-colors"
                     >
-                        {showPreview ? <Eye size={16} /> : <Smartphone size={16} />}
-                        {showPreview ? 'Ocultar Vista' : 'Ver Vista Previa'}
+                        <Tag size={16} />
+                        + Categoría
                     </button>
-
                     <button
-                        onClick={() => {
-                            setEditingProduct(null);
-                            setShowAddModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-primary/20"
+                        onClick={() => setShowProModal(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-green-500/25"
                     >
                         <Plus size={18} />
-                        Nuevo Producto
+                        ✨ Nuevo Producto
                     </button>
+                </div>
+            </div>
+
+            {/* Stats Strip */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-white rounded-xl border border-slate-100 p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <Package size={20} className="text-blue-600" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-black text-slate-900">{totalProducts}</p>
+                        <p className="text-xs text-slate-500">Total productos</p>
+                    </div>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-100 p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+                        <Eye size={20} className="text-green-600" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-black text-slate-900">{availableProducts}</p>
+                        <p className="text-xs text-slate-500">Disponibles</p>
+                    </div>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-100 p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+                        <Star size={20} className="text-amber-500" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-black text-slate-900">{featuredProducts}</p>
+                        <p className="text-xs text-slate-500">Destacados</p>
+                    </div>
                 </div>
             </div>
 
@@ -266,7 +357,7 @@ export default function ProductsPage() {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Buscar productos..."
+                            placeholder="Buscar por nombre, descripción o categoría..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-11 pr-4 py-3 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -275,16 +366,16 @@ export default function ProductsPage() {
 
                     {/* Category Filter */}
                     <div className="relative">
+                        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <select
                             value={selectedCategory || ''}
                             onChange={(e) => setSelectedCategory(e.target.value || null)}
-                            className="appearance-none px-4 py-3 pr-10 bg-slate-50 border-0 rounded-xl text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[180px]"
+                            className="appearance-none pl-9 pr-10 py-3 bg-slate-50 border-0 rounded-xl text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[200px]"
                         >
                             <option value="">Todas las categorías</option>
                             {categories.map((cat) => (
                                 <option key={cat.id} value={cat.id}>
-                                    {/* @ts-ignore */}
-                                    {cat.icon} {cat.name_es}
+                                    {cat.name}
                                 </option>
                             ))}
                         </select>
@@ -295,21 +386,34 @@ export default function ProductsPage() {
                     <div className="flex bg-slate-100 rounded-xl p-1">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-slate-50'
-                                }`}
+                            className={`p-2.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-slate-50'}`}
                         >
                             <Grid3X3 size={18} className={viewMode === 'grid' ? 'text-primary' : 'text-slate-400'} />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-slate-50'
-                                }`}
+                            className={`p-2.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-slate-50'}`}
                         >
                             <List size={18} className={viewMode === 'list' ? 'text-primary' : 'text-slate-400'} />
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Results count */}
+            {searchQuery || selectedCategory ? (
+                <p className="text-sm text-slate-500 mb-4">
+                    {filteredProducts.length} de {totalProducts} productos
+                    {selectedCategory && (
+                        <button
+                            onClick={() => setSelectedCategory(null)}
+                            className="ml-2 text-primary font-medium hover:underline"
+                        >
+                            Limpiar filtro
+                        </button>
+                    )}
+                </p>
+            ) : null}
 
             {/* Products */}
             {products.length === 0 ? (
@@ -322,8 +426,8 @@ export default function ProductsPage() {
                         Añade productos a tu menú para que los clientes puedan verlos y pedirlos.
                     </p>
                     <button
-                        onClick={() => setShowAddModal(true)}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transition-colors"
+                        onClick={() => setShowProModal(true)}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-colors"
                     >
                         <Plus size={18} />
                         Añadir Primer Producto
@@ -338,18 +442,15 @@ export default function ProductsPage() {
                     {filteredProducts.map((product) => (
                         <ProductCard
                             key={product.id}
-                            // @ts-ignore
                             product={product}
                             onEdit={() => {
-                                // @ts-ignore
                                 setEditingProduct(product);
-                                setShowAddModal(true);
+                                setShowProModal(true);
                             }}
-                            onToggleAvailable={() => toggleProductAvailable(product.id, !product.is_available)}
-                            onToggleFeatured={() => toggleProductFeatured(product.id, !product.is_featured)}
-                            // @ts-ignore
-                            onDuplicate={() => duplicateProduct(product)}
-                            onDelete={() => deleteProduct(product.id)}
+                            onToggleAvailable={() => handleToggleAvailable(product.id)}
+                            onToggleFeatured={() => handleToggleFeatured(product.id)}
+                            onDuplicate={() => handleDuplicate(product.id)}
+                            onDelete={() => handleDelete(product.id)}
                         />
                     ))}
                 </div>
@@ -367,13 +468,13 @@ export default function ProductsPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {filteredProducts.map((product) => (
-                                <tr key={product.id} className="hover:bg-slate-50">
+                                <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             {product.image_url ? (
                                                 <img
                                                     src={product.image_url}
-                                                    alt={product.name_es}
+                                                    alt={product.name}
                                                     className="w-12 h-12 rounded-xl object-cover"
                                                 />
                                             ) : (
@@ -382,49 +483,36 @@ export default function ProductsPage() {
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="font-bold text-slate-900">{product.name_es}</p>
+                                                <p className="font-bold text-slate-900">{product.name}</p>
                                                 <div className="flex items-center gap-1 mt-0.5">
-                                                    {product.is_vegetarian && <span title="Vegetariano">🥬</span>}
-                                                    {product.is_vegan && <span title="Vegano">🌱</span>}
-                                                    {product.is_gluten_free && <span title="Sin gluten">🌾</span>}
+                                                    {product.dietary_tags?.includes('vegetarian') && <span title="Vegetariano">🥬</span>}
+                                                    {product.dietary_tags?.includes('vegan') && <span title="Vegano">🌱</span>}
+                                                    {product.dietary_tags?.includes('gluten_free') && <span title="Sin gluten">🌾</span>}
                                                     {product.is_featured && <Star size={12} className="text-amber-400 fill-amber-400" />}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-sm text-slate-600">
-                                            {// @ts-ignore
-                                                product.category?.icon} {// @ts-ignore
-                                                product.category?.name_es}
+                                        <span className="text-sm text-slate-600 px-2 py-1 bg-slate-50 rounded-lg">
+                                            {product.category_name}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="font-bold text-slate-900">€{product.price.toFixed(2)}</span>
-                                        {product.compare_price && (
-                                            <span className="text-xs text-slate-400 line-through ml-2">
-                                                €{product.compare_price.toFixed(2)}
-                                            </span>
-                                        )}
+                                        <span className="font-bold text-slate-900">€{product.price?.toFixed(2)}</span>
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <button
-                                            onClick={() => toggleProductAvailable(product.id, !product.is_available)}
+                                            onClick={() => handleToggleAvailable(product.id)}
                                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${product.is_available
                                                 ? 'bg-green-100 text-green-700'
                                                 : 'bg-slate-100 text-slate-500'
                                                 }`}
                                         >
                                             {product.is_available ? (
-                                                <>
-                                                    <Eye size={12} />
-                                                    Visible
-                                                </>
+                                                <><Eye size={12} /> Visible</>
                                             ) : (
-                                                <>
-                                                    <EyeOff size={12} />
-                                                    Oculto
-                                                </>
+                                                <><EyeOff size={12} /> Oculto</>
                                             )}
                                         </button>
                                     </td>
@@ -432,9 +520,8 @@ export default function ProductsPage() {
                                         <div className="flex items-center justify-end gap-1">
                                             <button
                                                 onClick={() => {
-                                                    // @ts-ignore
                                                     setEditingProduct(product);
-                                                    setShowAddModal(true);
+                                                    setShowProModal(true);
                                                 }}
                                                 className="p-2 hover:bg-slate-100 rounded-lg"
                                                 title="Editar"
@@ -442,15 +529,14 @@ export default function ProductsPage() {
                                                 <Edit3 size={16} className="text-slate-400" />
                                             </button>
                                             <button
-                                                // @ts-ignore
-                                                onClick={() => duplicateProduct(product)}
+                                                onClick={() => handleDuplicate(product.id)}
                                                 className="p-2 hover:bg-slate-100 rounded-lg"
                                                 title="Duplicar"
                                             >
                                                 <Copy size={16} className="text-slate-400" />
                                             </button>
                                             <button
-                                                onClick={() => deleteProduct(product.id)}
+                                                onClick={() => handleDelete(product.id)}
                                                 className="p-2 hover:bg-red-50 rounded-lg"
                                                 title="Eliminar"
                                             >
@@ -465,28 +551,41 @@ export default function ProductsPage() {
                 </div>
             )}
 
-            {/* Add/Edit Modal */}
-            <AnimatePresence>
-                {showAddModal && (
-                    <ProductModal
-                        product={editingProduct}
-                        // @ts-ignore
-                        categories={categories}
-                        saving={saving}
-                        // @ts-ignore
-                        onSave={handleSaveProduct}
-                        onClose={() => {
-                            setShowAddModal(false);
-                            setEditingProduct(null);
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+            {/* Unified Create/Edit Modal */}
+            {showProModal && (
+                <CreateProductModalPro
+                    categoryId={selectedCategory || categories[0]?.id || ''}
+                    categoryName={selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : categories[0]?.name}
+                    categories={categories}
+                    allProducts={products}
+                    product={editingProduct}
+                    onClose={() => {
+                        setShowProModal(false);
+                        setEditingProduct(null);
+                    }}
+                    onSuccess={() => {
+                        setShowProModal(false);
+                        setEditingProduct(null);
+                        loadData();
+                        refreshMenu();
+                    }}
+                />
+            )}
+            {showCategoryModal && (
+                <CategoryModal
+                    category={null}
+                    menus={menus}
+                    onSave={handleSaveCategory}
+                    onClose={() => setShowCategoryModal(false)}
+                />
+            )}
         </div>
     );
 }
 
+// ============================================
 // Product Card Component
+// ============================================
 function ProductCard({
     product,
     onEdit,
@@ -517,7 +616,7 @@ function ProductCard({
                 {product.image_url ? (
                     <img
                         src={product.image_url}
-                        alt={product.name_es}
+                        alt={product.name}
                         className="w-full h-full object-cover"
                     />
                 ) : (
@@ -586,31 +685,25 @@ function ProductCard({
 
             {/* Content */}
             <div className="p-4">
-                <div className="flex items-center gap-1 mb-1 text-xs text-slate-500">
-                    <span>{product.category?.icon}</span>
-                    <span>{product.category?.name_es}</span>
+                <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded font-medium">{product.category_name}</span>
                 </div>
 
-                <h3 className="font-bold text-slate-900 line-clamp-1">{product.name_es}</h3>
+                <h3 className="font-bold text-slate-900 line-clamp-1">{product.name}</h3>
 
-                {product.description_es && (
-                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">{product.description_es}</p>
+                {product.description && (
+                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">{product.description}</p>
                 )}
 
                 <div className="flex items-center justify-between mt-3">
                     <div className="flex items-baseline gap-2">
-                        <span className="font-black text-lg text-primary">€{product.price.toFixed(2)}</span>
-                        {product.compare_price && (
-                            <span className="text-sm text-slate-400 line-through">
-                                €{product.compare_price.toFixed(2)}
-                            </span>
-                        )}
+                        <span className="font-black text-lg text-primary">€{product.price?.toFixed(2)}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
-                        {product.is_vegetarian && <span title="Vegetariano">🥬</span>}
-                        {product.is_vegan && <span title="Vegano">🌱</span>}
-                        {product.is_gluten_free && <span title="Sin gluten" className="text-xs">🚫🌾</span>}
+                        {product.dietary_tags?.includes('vegetarian') && <span title="Vegetariano">🥬</span>}
+                        {product.dietary_tags?.includes('vegan') && <span title="Vegano">🌱</span>}
+                        {product.dietary_tags?.includes('gluten_free') && <span title="Sin gluten" className="text-xs">🚫🌾</span>}
                     </div>
                 </div>
             </div>

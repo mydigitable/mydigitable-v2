@@ -1,141 +1,169 @@
 "use client";
 
-import { Check, Sun, Moon, Monitor, Palette } from "lucide-react";
+import { Palette, Globe } from "lucide-react";
 
 interface Props {
-    data: any;
-    onUpdate: (data: any) => void;
+    formData: any;
+    updateFormData: (data: any) => void;
+    planTier: 'basic' | 'pro' | 'premium';
 }
 
-const themeOptions = [
-    { id: "classic", label: "Classic", description: "Limpio y profesional" },
-    { id: "dark", label: "Dark", description: "Moderno y elegante" },
-    { id: "light", label: "Light", description: "Simple y luminoso" },
-];
+export function Step9Appearance({ formData, updateFormData, planTier }: Props) {
+    const themes = [
+        { id: 'modern', name: 'Moderno', primary: '#22C55E', secondary: '#FFC107' },
+        { id: 'elegant', name: 'Elegante', primary: '#1E293B', secondary: '#D4AF37' },
+        { id: 'fresh', name: 'Fresco', primary: '#06B6D4', secondary: '#F59E0B' },
+        { id: 'warm', name: 'Cálido', primary: '#F97316', secondary: '#FBBF24' },
+        { id: 'ocean', name: 'Océano', primary: '#0EA5E9', secondary: '#14B8A6' },
+        { id: 'sunset', name: 'Atardecer', primary: '#EC4899', secondary: '#F59E0B' },
+    ];
 
-const colorPalette = [
-    { name: "Verde", value: "#22C55E", class: "bg-green-500" },
-    { name: "Azul", value: "#3B82F6", class: "bg-blue-500" },
-    { name: "Rojo", value: "#EF4444", class: "bg-red-500" },
-    { name: "Naranja", value: "#F97316", class: "bg-orange-500" },
-    { name: "Morado", value: "#8B5CF6", class: "bg-purple-500" },
-    { name: "Rosa", value: "#EC4899", class: "bg-pink-500" },
-    { name: "Amarillo", value: "#EAB308", class: "bg-yellow-500" },
-    { name: "Cyan", value: "#06B6D4", class: "bg-cyan-500" },
-    { name: "Negro", value: "#18181B", class: "bg-zinc-900" },
-    { name: "Dorado", value: "#CA8A04", class: "bg-yellow-600" },
-];
+    const languages = [
+        { code: 'es', name: 'Español', flag: '🇪🇸' },
+        { code: 'en', name: 'English', flag: '🇬🇧' },
+        { code: 'fr', name: 'Français', flag: '🇫🇷' },
+        { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+        { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+        { code: 'pt', name: 'Português', flag: '🇵🇹' },
+    ];
 
-export function Step9Appearance({ data, onUpdate }: Props) {
-    const selectedTheme = data.theme_id || "classic";
-    const selectedColor = data.primary_color || "#22C55E";
+    const handleThemeSelect = (theme: typeof themes[0]) => {
+        updateFormData({
+            primary_color: theme.primary,
+            secondary_color: theme.secondary,
+        });
+    };
 
     return (
-        <div className="space-y-8">
-            {/* Theme Selector */}
-            <div>
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                    <Palette size={12} />
-                    Tema del Dashboard
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                    {themeOptions.map((theme) => (
-                        <button
-                            key={theme.id}
-                            type="button"
-                            onClick={() => onUpdate({ theme_id: theme.id })}
-                            className={`p-4 rounded-2xl border-2 transition-all text-center ${selectedTheme === theme.id
-                                    ? "border-primary bg-primary/5"
-                                    : "border-slate-100 hover:border-slate-200"
-                                }`}
-                        >
-                            <div className={`w-12 h-12 mx-auto rounded-xl mb-3 flex items-center justify-center ${theme.id === "dark"
-                                    ? "bg-slate-900 text-white"
-                                    : theme.id === "light"
-                                        ? "bg-white border border-slate-200 text-slate-600"
-                                        : "bg-slate-100 text-slate-600"
-                                }`}>
-                                {theme.id === "dark" ? <Moon size={20} /> :
-                                    theme.id === "light" ? <Sun size={20} /> :
-                                        <Monitor size={20} />}
-                            </div>
-                            <h4 className="font-bold text-slate-900 text-sm">{theme.label}</h4>
-                            <p className="text-[10px] text-slate-400 mt-1">{theme.description}</p>
-                        </button>
-                    ))}
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-3xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Palette className="w-8 h-8 text-white" />
                 </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-2">
+                    Apariencia
+                </h2>
+                <p className="text-slate-500">
+                    Personaliza el aspecto de tu menú digital
+                </p>
             </div>
 
-            {/* Color Principal */}
-            <div>
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
-                    Color principal
-                </h3>
-                <div className="grid grid-cols-5 gap-3">
-                    {colorPalette.map((color) => (
-                        <button
-                            key={color.value}
-                            type="button"
-                            onClick={() => onUpdate({ primary_color: color.value })}
-                            className={`aspect-square rounded-2xl transition-all relative ${color.class} ${selectedColor === color.value
-                                    ? "ring-4 ring-offset-2 ring-slate-900 scale-110"
-                                    : "hover:scale-105"
-                                }`}
-                            title={color.name}
-                        >
-                            {selectedColor === color.value && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Check size={20} className="text-white drop-shadow-lg" strokeWidth={3} />
+            {/* Temas */}
+            <div className="mb-8">
+                <label className="block text-sm font-black text-slate-900 mb-4">
+                    🎨 Tema de colores
+                </label>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {themes.map((theme) => {
+                        const isSelected = formData.primary_color === theme.primary;
+
+                        return (
+                            <button
+                                key={theme.id}
+                                type="button"
+                                onClick={() => handleThemeSelect(theme)}
+                                className={`p-4 rounded-2xl border-2 transition-all ${isSelected
+                                        ? "border-primary bg-primary/5"
+                                        : "border-slate-200 hover:border-primary bg-white"
+                                    }`}
+                            >
+                                <div className="flex gap-2 mb-3">
+                                    <div
+                                        className="w-full h-12 rounded-lg"
+                                        style={{ backgroundColor: theme.primary }}
+                                    />
+                                    <div
+                                        className="w-full h-12 rounded-lg"
+                                        style={{ backgroundColor: theme.secondary }}
+                                    />
                                 </div>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Custom color */}
-                <div className="mt-4 flex items-center gap-3">
-                    <span className="text-xs text-slate-400">O elige tu propio color:</span>
-                    <input
-                        type="color"
-                        value={selectedColor}
-                        onChange={(e) => onUpdate({ primary_color: e.target.value })}
-                        className="w-10 h-10 rounded-xl cursor-pointer border-2 border-slate-200"
-                    />
-                    <span className="text-xs font-mono text-slate-500">{selectedColor}</span>
+                                <p className="font-bold text-slate-900 text-sm">{theme.name}</p>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Preview */}
-            <div className="p-6 bg-slate-50 rounded-2xl">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Vista previa</h3>
-                <div
-                    className={`rounded-2xl p-6 transition-all ${selectedTheme === 'dark' ? 'bg-slate-900' : 'bg-white'
-                        }`}
-                    style={{ borderLeft: `4px solid ${selectedColor}` }}
-                >
-                    <div className="flex items-center gap-3 mb-4">
-                        <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black"
-                            style={{ backgroundColor: selectedColor }}
-                        >
-                            {data.name ? data.name.charAt(0).toUpperCase() : "M"}
-                        </div>
-                        <div>
-                            <h4 className={`font-bold ${selectedTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                                {data.name || "Tu Negocio"}
-                            </h4>
-                            <p className={`text-xs ${selectedTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                                Dashboard preview
-                            </p>
+            {/* Colores personalizados */}
+            <div className="mb-8">
+                <label className="block text-sm font-black text-slate-900 mb-4">
+                    🎨 O elige tus propios colores
+                </label>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-2">
+                            Color primario
+                        </label>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="color"
+                                value={formData.primary_color || '#22C55E'}
+                                onChange={(e) => updateFormData({ primary_color: e.target.value })}
+                                className="w-16 h-16 rounded-xl cursor-pointer border-2 border-slate-200"
+                            />
+                            <input
+                                type="text"
+                                value={formData.primary_color || '#22C55E'}
+                                onChange={(e) => updateFormData({ primary_color: e.target.value })}
+                                className="flex-1 h-12 px-4 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-primary focus:outline-none font-mono text-sm"
+                            />
                         </div>
                     </div>
-                    <button
-                        className="w-full py-3 rounded-xl font-bold text-white text-sm"
-                        style={{ backgroundColor: selectedColor }}
-                    >
-                        Botón de ejemplo
-                    </button>
+
+                    <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-2">
+                            Color secundario
+                        </label>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="color"
+                                value={formData.secondary_color || '#FFC107'}
+                                onChange={(e) => updateFormData({ secondary_color: e.target.value })}
+                                className="w-16 h-16 rounded-xl cursor-pointer border-2 border-slate-200"
+                            />
+                            <input
+                                type="text"
+                                value={formData.secondary_color || '#FFC107'}
+                                onChange={(e) => updateFormData({ secondary_color: e.target.value })}
+                                className="flex-1 h-12 px-4 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-primary focus:outline-none font-mono text-sm"
+                            />
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            {/* Idioma */}
+            <div>
+                <label className="block text-sm font-black text-slate-900 mb-4">
+                    🌍 Idioma del menú
+                </label>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {languages.map((lang) => (
+                        <button
+                            key={lang.code}
+                            type="button"
+                            onClick={() => updateFormData({ default_language: lang.code })}
+                            className={`p-4 rounded-2xl border-2 transition-all ${formData.default_language === lang.code
+                                    ? "border-primary bg-primary/5"
+                                    : "border-slate-200 hover:border-primary bg-white"
+                                }`}
+                        >
+                            <div className="text-3xl mb-2">{lang.flag}</div>
+                            <p className="font-bold text-slate-900 text-sm">{lang.name}</p>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Info adicional */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-sm text-blue-700 font-medium text-center">
+                    💡 Podrás cambiar estos colores e idiomas en cualquier momento desde el dashboard
+                </p>
             </div>
         </div>
     );

@@ -15,21 +15,16 @@ import {
     MapPin,
     Building2,
     Search,
-    CheckCircle2,
     Sparkles,
     Eye,
     EyeOff,
     Loader2,
-    QrCode,
-    BarChart3,
-    Users,
     AlertCircle,
-    Shield,
-    Zap,
-    Globe
 } from "lucide-react";
 import { countries } from "./countries";
 import { registerAction } from "./actions";
+import type { PlanTier, BusinessType, OnboardingConfig } from '@/types/database';
+import { calculatePricing } from '@/types/database';
 
 const translations = {
     ES: {
@@ -41,9 +36,7 @@ const translations = {
         labelCountry: "País de operación",
         labelPass: "Contraseña",
         labelConfirm: "Confirmar",
-        labelPlan: "Infraestructura",
         btnRegister: "REGISTRARSE",
-        btnChange: "CAMBIAR",
         back: "Volver",
         searchPlaceholder: "Buscar país...",
         hasAccount: "¿Ya tienes cuenta?",
@@ -51,8 +44,6 @@ const translations = {
         successTitle: "¡Cuenta creada!",
         successMessage: "Tu cuenta ha sido creada exitosamente. Ahora vamos a configurar tu negocio.",
         successButton: "Continuar",
-        planSelected: "SELECCIONADO",
-        planSelect: "ELEGIR",
         errors: {
             mismatch: "Las contraseñas no coinciden",
             short: "La contraseña debe tener al menos 6 caracteres",
@@ -68,9 +59,7 @@ const translations = {
         labelCountry: "Operating Country",
         labelPass: "Password",
         labelConfirm: "Confirm",
-        labelPlan: "Infrastructure",
         btnRegister: "REGISTER",
-        btnChange: "CHANGE",
         back: "Back",
         searchPlaceholder: "Search country...",
         hasAccount: "Already have an account?",
@@ -78,8 +67,6 @@ const translations = {
         successTitle: "Account created!",
         successMessage: "Your account has been created successfully. Now let's set up your business.",
         successButton: "Continue",
-        planSelected: "SELECTED",
-        planSelect: "CHOOSE",
         errors: {
             mismatch: "Passwords do not match",
             short: "Password must be at least 6 characters",
@@ -88,16 +75,93 @@ const translations = {
     }
 };
 
-const plansData = {
-    Starter: { price: "0", dbCode: "basic", features: ["Menú digital", "QR básicos", "Pedidos online"] },
-    Básico: { price: "40", dbCode: "pro", features: ["Todo de Starter", "0% Comisiones", "Multi-idioma", "Analytics"] },
-    Pro: { price: "90", dbCode: "enterprise", features: ["Todo de Básico", "Beach GPS", "IA Sync", "Soporte 24/7"] }
-};
+const PLANS = [
+    {
+        id: 'basic' as PlanTier,
+        name: 'Básico',
+        price: 49,
+        popular: false,
+        description: 'Para empezar a digitalizar',
+        color: 'slate',
+        features: [
+            { text: 'Menú QR ilimitado', included: true },
+            { text: 'Categorías y productos ilimitados', included: true },
+            { text: 'Fotos HD de productos', included: true },
+            { text: 'Hasta 3 staff', included: true },
+            { text: '3 temas de diseño', included: true },
+            { text: '3 idiomas (ES, EN, FR)', included: true },
+            { text: 'Pagos Stripe + efectivo + Apple/Google Pay', included: true },
+            { text: 'Propinas digitales', included: true },
+            { text: 'Llamar al mozo', included: true },
+            { text: 'Pedidos desde mesa', included: true },
+            { text: 'Dashboard básico', included: true },
+            { text: 'Mesa compartida con PIN', included: false },
+            { text: 'KDS - Vista cocina', included: false },
+            { text: 'IA importar menú', included: false },
+            { text: 'App PWA camareros', included: false },
+            { text: 'Delivery y reservas', included: false },
+            { text: 'Analytics avanzado', included: false },
+            { text: 'Modo playa / hotel / eventos', included: false },
+        ]
+    },
+    {
+        id: 'pro' as PlanTier,
+        name: 'Pro',
+        price: 99,
+        popular: true,
+        description: 'Para crecer y automatizar',
+        color: 'green',
+        features: [
+            { text: 'Todo lo de Básico', included: true },
+            { text: 'Hasta 10 staff', included: true },
+            { text: '20+ temas premium', included: true },
+            { text: '7 idiomas completos', included: true },
+            { text: 'Mesa compartida con PIN 🔥', included: true },
+            { text: 'KDS - Vista cocina', included: true },
+            { text: 'IA importar menú desde foto 📸', included: true },
+            { text: 'App PWA camareros', included: true },
+            { text: 'Chatbot IA', included: true },
+            { text: 'Delivery y reservas', included: true },
+            { text: 'Precio distinto en terraza', included: true },
+            { text: 'Promociones y descuentos', included: true },
+            { text: 'Analytics avanzado', included: true },
+            { text: 'Exportar Excel/PDF', included: true },
+            { text: 'Modo playa GPS', included: false },
+            { text: 'Modo hotel', included: false },
+            { text: 'Modo eventos', included: false },
+            { text: 'White label', included: false },
+            { text: 'API acceso', included: false },
+        ]
+    },
+    {
+        id: 'premium' as PlanTier,
+        name: 'Premium',
+        price: 150,
+        popular: false,
+        description: 'Para cadenas y hoteles',
+        color: 'slate',
+        features: [
+            { text: 'Todo lo de Pro', included: true },
+            { text: 'Staff ilimitado', included: true },
+            { text: 'Todos los idiomas + auto-detect', included: true },
+            { text: 'Modo playa GPS 🏖️', included: true },
+            { text: 'Modo hotel 🏨', included: true },
+            { text: 'Modo eventos 🎭', included: true },
+            { text: 'White label (marca propia)', included: true },
+            { text: 'API acceso completo', included: true },
+            { text: 'Control financiero (margen)', included: true },
+            { text: 'Temas personalizados + CSS', included: true },
+            { text: 'Soporte prioritario', included: true },
+        ]
+    }
+];
 
 export default function RegisterPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [selectedPlan, setSelectedPlan] = useState<"Starter" | "Básico" | "Pro">("Básico");
+
+    const [selectedPlan, setSelectedPlan] = useState<PlanTier>('pro');
+    const [locations, setLocations] = useState(1);
 
     const [restaurantName, setRestaurantName] = useState("");
     const [email, setEmail] = useState("");
@@ -106,12 +170,10 @@ export default function RegisterPage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const langCode = (searchParams.get("lang") || "ES").toUpperCase();
     const content = (translations as any)[langCode] || translations.ES;
 
-    const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -123,6 +185,9 @@ export default function RegisterPage() {
     const filteredCountries = countries.filter(c =>
         c.toLowerCase().includes(countrySearch.toLowerCase())
     );
+
+    const pricing = calculatePricing(selectedPlan, locations);
+    const selectedPlanData = PLANS.find(p => p.id === selectedPlan)!;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -145,30 +210,41 @@ export default function RegisterPage() {
         formData.append("email", email);
         formData.append("password", password);
         formData.append("country", selectedCountry);
-        formData.append("plan", plansData[selectedPlan].dbCode);
+        formData.append("plan", selectedPlan);
 
         try {
             const result = await registerAction(formData);
-            console.log("Register result:", result);
+
 
             if (result.error) {
                 setErrorMessage(result.error);
                 setIsLoading(false);
-            } else if (result.success) {
-                setIsLoading(false);
-                setShowSuccessModal(true);
+            } else if (result.success && result.userId) {
+
+                // Guardar configuración en localStorage para el onboarding
+                const onboardingConfig = {
+                    userId: result.userId,
+                    email: email,
+                    restaurantName: restaurantName,
+                    country: selectedCountry,
+                    planTier: selectedPlan,
+                    locations: locations,
+                    timestamp: new Date().toISOString()
+                };
+
+                localStorage.setItem('onboardingConfig', JSON.stringify(onboardingConfig));
+
+
+                // Redirigir a onboarding
+                router.push('/onboarding');
             }
-        } catch (error) {
-            console.error("Register error:", error);
+        } catch {
             setErrorMessage(content.errors.generic);
             setIsLoading(false);
         }
     };
 
-    const handleContinueToOnboarding = () => {
-        setShowSuccessModal(false);
-        router.push('/onboarding');
-    };
+
 
     return (
         <div className="min-h-screen bg-white flex flex-col lg:flex-row">
@@ -329,21 +405,6 @@ export default function RegisterPage() {
                             </div>
                         </div>
 
-                        {/* Plan selector */}
-                        <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-between">
-                            <div>
-                                <p className="text-[9px] font-black uppercase tracking-wider text-primary mb-0.5">{content.labelPlan}</p>
-                                <p className="text-xl font-black text-slate-900">Plan {selectedPlan}</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setIsPlanModalOpen(true)}
-                                className="px-4 py-2 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 hover:border-primary transition-colors text-slate-900"
-                            >
-                                {content.btnChange}
-                            </button>
-                        </div>
-
                         <button
                             disabled={isLoading}
                             type="submit"
@@ -371,128 +432,146 @@ export default function RegisterPage() {
                 </div>
             </div>
 
-            {/* LADO DERECHO */}
-            <div className="hidden lg:flex flex-1 bg-slate-900 relative items-center justify-center p-20 overflow-hidden">
+            {/* LADO DERECHO - NUEVO DISEÑO */}
+            <div className="hidden lg:flex flex-1 bg-slate-900 relative flex-col overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--primary)_1.2px,_transparent_1.2px)] [background-size:60px_60px] opacity-10" />
                 <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
 
-                <div className="relative z-10 max-w-sm w-full space-y-10">
-                    <div>
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-6">
-                            ¿Por qué elegirnos?
-                        </span>
-                        <h2 className="text-4xl font-black text-white tracking-tighter leading-tight">
-                            Plan <span className="text-primary italic">{selectedPlan}</span>
-                        </h2>
+                <div className="relative z-10 flex flex-col h-full">
+                    {/* TABS DE PLANES */}
+                    <div className="p-8 pb-0">
+                        <div className="flex gap-2 mb-6">
+                            {PLANS.map((plan) => (
+                                <button
+                                    key={plan.id}
+                                    type="button"
+                                    onClick={() => setSelectedPlan(plan.id)}
+                                    className={`flex-1 px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all ${selectedPlan === plan.id
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                                        : 'bg-transparent text-white/40 border border-white/10 hover:text-white/60 hover:border-white/20'
+                                        }`}
+                                >
+                                    {plan.name} {plan.popular && '⭐'}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    <ul className="space-y-4">
-                        {plansData[selectedPlan].features.map((f, i) => (
-                            <li key={i} className="flex gap-3 items-center text-white/80">
-                                <Check size={16} className="text-primary" />
-                                {f}
-                            </li>
-                        ))}
-                    </ul>
+                    {/* CONTENIDO DEL PLAN (scrollable) */}
+                    <div className="flex-1 overflow-y-auto px-8 pb-8">
+                        <div className="space-y-6">
+                            {/* HEADER DEL PLAN */}
+                            <div>
+                                <div className="flex items-start justify-between mb-2">
+                                    <h3 className="text-4xl font-black text-white">{selectedPlanData.name}</h3>
+                                    {selectedPlanData.popular && (
+                                        <span className="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase">
+                                            Más Popular
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-white/60 text-sm mb-4">{selectedPlanData.description}</p>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-5xl font-black text-white">€{selectedPlanData.price}</span>
+                                    <span className="text-white/40 text-sm">/mes por sucursal</span>
+                                </div>
+                            </div>
 
-                    <div className="pt-6 border-t border-white/10">
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-black text-white italic">€{plansData[selectedPlan].price}</span>
-                            <span className="text-white/40 text-sm">/mes</span>
+                            {/* FEATURES COMPLETAS */}
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-4">
+                                    Características incluidas
+                                </h4>
+                                <ul className="space-y-3">
+                                    {selectedPlanData.features.map((f, i) => (
+                                        <li key={i} className="flex gap-3 items-start">
+                                            {f.included ? (
+                                                <Check size={16} className="text-primary flex-shrink-0 mt-0.5" strokeWidth={3} />
+                                            ) : (
+                                                <X size={16} className="text-white/20 flex-shrink-0 mt-0.5" />
+                                            )}
+                                            <span className={`text-sm ${f.included ? 'text-white font-medium' : 'text-white/30'}`}>
+                                                {f.text}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SLIDER DE SUCURSALES + RESUMEN (sticky bottom) */}
+                    <div className="bg-slate-800/50 backdrop-blur-sm border-t border-white/10 p-8 space-y-6">
+                        {/* SLIDER */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-white font-black text-sm">¿Cuántas sucursales?</h4>
+                                <span className="text-3xl font-black text-white">{locations}</span>
+                            </div>
+
+                            <input
+                                type="range"
+                                min="1"
+                                max="20"
+                                step="1"
+                                value={locations}
+                                onChange={(e) => setLocations(Number(e.target.value))}
+                                className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-primary"
+                                style={{
+                                    background: `linear-gradient(to right, #22c55e 0%, #22c55e ${((locations - 1) / 19) * 100}%, rgba(255,255,255,0.1) ${((locations - 1) / 19) * 100}%, rgba(255,255,255,0.1) 100%)`
+                                }}
+                            />
+
+                            <div className="text-center">
+                                {locations === 1 && (
+                                    <span className="text-white/60 text-sm">Sin descuento</span>
+                                )}
+                                {locations >= 2 && locations <= 5 && (
+                                    <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full">
+                                        <span className="font-black text-sm">-5%</span>
+                                        <span className="text-xs">
+                                            · Ahorrás €{((pricing.basePrice * locations * 0.05)).toFixed(2)}/mes
+                                        </span>
+                                    </div>
+                                )}
+                                {locations >= 6 && (
+                                    <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full">
+                                        <span className="font-black text-sm">-10%</span>
+                                        <span className="text-xs">
+                                            · Ahorrás €{((pricing.basePrice * locations * 0.10)).toFixed(2)}/mes
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* RESUMEN PRECIO */}
+                        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6">
+                            <div className="flex items-baseline justify-between mb-2">
+                                <div>
+                                    <div className="text-white/60 text-xs mb-1">
+                                        Plan {selectedPlanData.name} · {locations} {locations === 1 ? 'sucursal' : 'sucursales'}
+                                    </div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-4xl font-black text-white">
+                                            €{pricing.monthlyTotal.toFixed(2)}
+                                        </span>
+                                        <span className="text-white/40 text-sm">/mes</span>
+                                    </div>
+                                </div>
+                                {pricing.discount > 0 && (
+                                    <div className="bg-primary text-white px-3 py-1 rounded-full text-xs font-black">
+                                        -{pricing.discount}%
+                                    </div>
+                                )}
+                            </div>
+                            <div className="text-white/40 text-xs mt-3 pt-3 border-t border-white/10">
+                                Sin permanencia · Cancela cuando quieras
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* MODAL PLANES */}
-            <AnimatePresence>
-                {isPlanModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsPlanModalOpen(false)}
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md cursor-pointer"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="relative w-full max-w-3xl bg-white rounded-[3rem] shadow-2xl p-10 overflow-hidden"
-                        >
-                            <button
-                                onClick={() => setIsPlanModalOpen(false)}
-                                className="absolute top-8 right-8 p-3 hover:bg-slate-50 rounded-full transition-all text-slate-400"
-                            >
-                                <X size={24} />
-                            </button>
-
-                            <div className="text-center mb-10">
-                                <h3 className="text-3xl font-black tracking-tight text-slate-900">Elige tu plan</h3>
-                            </div>
-
-                            <div className="grid md:grid-cols-3 gap-4">
-                                {Object.entries(plansData).map(([name, data]) => (
-                                    <div
-                                        key={name}
-                                        onClick={() => { setSelectedPlan(name as any); setIsPlanModalOpen(false); }}
-                                        className={`p-6 rounded-2xl border-2 transition-all cursor-pointer ${selectedPlan === name
-                                                ? 'border-primary bg-primary/5 scale-105'
-                                                : 'border-slate-100 hover:border-primary/30'
-                                            }`}
-                                    >
-                                        <h4 className="text-xl font-black mb-1 text-slate-900">{name}</h4>
-                                        <div className="flex items-baseline gap-1 mb-4">
-                                            <span className="text-3xl font-black text-slate-900">€{data.price}</span>
-                                            <span className="text-slate-400 text-xs">/mes</span>
-                                        </div>
-                                        <ul className="space-y-2 mb-4">
-                                            {data.features.map((f, i) => (
-                                                <li key={i} className="flex gap-2 items-center text-xs text-slate-600">
-                                                    <Check size={12} className="text-primary" />
-                                                    {f}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        <div className={`w-full py-3 rounded-xl text-center text-xs font-black uppercase ${selectedPlan === name
-                                                ? 'bg-primary text-white'
-                                                : 'bg-slate-100 text-slate-400'
-                                            }`}>
-                                            {selectedPlan === name ? content.planSelected : content.planSelect}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* SUCCESS MODAL */}
-            {showSuccessModal && (
-                <div className="fixed inset-0 flex items-center justify-center p-6" style={{ zIndex: 9999 }}>
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-                    <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 text-center" style={{ zIndex: 10000 }}>
-                        <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
-                            <Check size={48} className="text-white" strokeWidth={3} />
-                        </div>
-                        <h3 className="text-3xl font-black tracking-tight text-slate-900 mb-3">
-                            {content.successTitle}
-                        </h3>
-                        <p className="text-slate-500 mb-8 leading-relaxed">
-                            {content.successMessage}
-                        </p>
-                        <button
-                            onClick={handleContinueToOnboarding}
-                            className="w-full h-14 bg-primary text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-                        >
-                            {content.successButton}
-                            <ArrowRight size={18} />
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
