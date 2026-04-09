@@ -73,49 +73,6 @@ const MOCK_MENUS = [
 
 // ─── Config factory ───────────────────────────────────────────────────────────
 
-const MOCK_THEME_BASE: Omit<MenuTheme, 'header_style' | 'category_style' | 'colors' | 'fonts' | 'name' | 'slug'> = {
-    id: 'gallery-mock',
-    description: '',
-    card_shape: 'rounded',
-    featured_style: 'dark-banner',
-    layout_type: 'grid',
-    best_for: [],
-    is_premium: false,
-    display_order: 0,
-    created_at: '',
-    updated_at: '',
-}
-
-function makeConfig(
-    theme: Pick<MenuTheme, 'name' | 'slug' | 'colors' | 'fonts' | 'header_style' | 'category_style'> & Partial<MenuTheme>,
-    overrides?: Partial<RestaurantDesignConfig>
-): RestaurantDesignConfig {
-    return {
-        id: 'gallery-mock',
-        restaurant_id: 'gallery-mock',
-        selected_theme: { ...MOCK_THEME_BASE, ...theme } as MenuTheme,
-        layout_type: 'grid',
-        grid_columns: 2,
-        card_style: 'elevated',
-        spacing: 'normal',
-        border_radius: 12,
-        show_search: true,
-        show_categories: true,
-        show_images: true,
-        show_prices: true,
-        show_descriptions: true,
-        show_badges: true,
-        show_prep_time: false,
-        show_allergens: false,
-        show_logo: true,
-        show_header: true,
-        show_powered_by: false,
-        created_at: '',
-        updated_at: '',
-        ...overrides,
-    }
-}
-
 // ─── Theme color presets ──────────────────────────────────────────────────────
 
 const COLORS_MODERN = {
@@ -161,80 +118,77 @@ const GROUP1_ITEMS: Group1Item[] = [
     { label: 'Warm Rustic', slug: 'warm-rustic', colors: COLORS_RUSTIC, fonts: { heading: 'Libre Baskerville', body: 'Source Sans 3' } },
 ]
 
+// ─── Config factory (for MenuPreview / MobilePreview) ────────────────────────
+
+const MOCK_THEME_BASE: Omit<MenuTheme, 'header_style' | 'category_style' | 'colors' | 'fonts' | 'name' | 'slug'> = {
+    id: 'gallery-mock',
+    description: '',
+    card_shape: 'rounded',
+    featured_style: 'dark-banner',
+    layout_type: 'grid',
+    best_for: [],
+    is_premium: false,
+    display_order: 0,
+    created_at: '',
+    updated_at: '',
+}
+
+function makeConfig(
+    theme: Pick<MenuTheme, 'name' | 'slug' | 'colors' | 'fonts' | 'header_style' | 'category_style'> & Partial<MenuTheme>,
+    overrides?: Partial<RestaurantDesignConfig>
+): RestaurantDesignConfig {
+    return {
+        id: 'gallery-mock',
+        restaurant_id: 'gallery-mock',
+        selected_theme: { ...MOCK_THEME_BASE, ...theme } as MenuTheme,
+        layout_type: 'grid',
+        grid_columns: 2,
+        card_style: 'elevated',
+        spacing: 'normal',
+        border_radius: 12,
+        show_search: true,
+        show_categories: true,
+        show_images: true,
+        show_prices: true,
+        show_descriptions: true,
+        show_badges: true,
+        show_prep_time: false,
+        show_allergens: false,
+        show_logo: true,
+        show_header: true,
+        show_powered_by: false,
+        created_at: '',
+        updated_at: '',
+        ...overrides,
+    }
+}
+
 // ─── Group 2: MenuPreview — 5 estilos de header ───────────────────────────────
 
 const GROUP2_CONFIGS: Array<{ label: string; config: RestaurantDesignConfig }> = [
-    {
-        label: 'Header: Simple',
-        config: makeConfig({ name: 'Simple', slug: 'simple', colors: COLORS_MODERN, fonts: { heading: 'DM Sans', body: 'DM Sans' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'dark-banner' }),
-    },
-    {
-        label: 'Header: Hero',
-        config: makeConfig({ name: 'Hero', slug: 'hero', colors: COLORS_BISTRO, fonts: { heading: 'Playfair Display', body: 'Lato' }, header_style: 'hero', category_style: 'pills', card_shape: 'rounded', featured_style: 'dark-banner' }),
-    },
-    {
-        label: 'Header: Industrial',
-        config: makeConfig({ name: 'Industrial', slug: 'industrial', colors: COLORS_CRAFT, fonts: { heading: 'Bebas Neue', body: 'Barlow' }, header_style: 'industrial', category_style: 'tags', card_shape: 'sharp', featured_style: 'dark-banner' }),
-    },
-    {
-        label: 'Header: Editorial',
-        config: makeConfig({ name: 'Editorial', slug: 'editorial', colors: COLORS_NORDIC, fonts: { heading: 'Cormorant Garamond', body: 'Outfit' }, header_style: 'editorial', category_style: 'underline', card_shape: 'borderless', featured_style: 'hero-image' }),
-    },
-    {
-        label: 'Header: Ornamental',
-        config: makeConfig({ name: 'Ornamental', slug: 'ornamental', colors: COLORS_RUSTIC, fonts: { heading: 'Libre Baskerville', body: 'Source Sans 3' }, header_style: 'ornamental', category_style: 'italic-tags', card_shape: 'soft', featured_style: 'ribbon' }),
-    },
+    { label: 'Header: Simple', config: makeConfig({ name: 'Simple', slug: 'simple', colors: COLORS_MODERN, fonts: { heading: 'DM Sans', body: 'DM Sans' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'dark-banner' }) },
+    { label: 'Header: Hero', config: makeConfig({ name: 'Hero', slug: 'hero', colors: COLORS_BISTRO, fonts: { heading: 'Playfair Display', body: 'Lato' }, header_style: 'hero', category_style: 'pills', card_shape: 'rounded', featured_style: 'dark-banner' }) },
+    { label: 'Header: Industrial', config: makeConfig({ name: 'Industrial', slug: 'industrial', colors: COLORS_CRAFT, fonts: { heading: 'Bebas Neue', body: 'Barlow' }, header_style: 'industrial', category_style: 'tags', card_shape: 'sharp', featured_style: 'dark-banner' }) },
+    { label: 'Header: Editorial', config: makeConfig({ name: 'Editorial', slug: 'editorial', colors: COLORS_NORDIC, fonts: { heading: 'Cormorant Garamond', body: 'Outfit' }, header_style: 'editorial', category_style: 'underline', card_shape: 'borderless', featured_style: 'hero-image' }) },
+    { label: 'Header: Ornamental', config: makeConfig({ name: 'Ornamental', slug: 'ornamental', colors: COLORS_RUSTIC, fonts: { heading: 'Libre Baskerville', body: 'Source Sans 3' }, header_style: 'ornamental', category_style: 'italic-tags', card_shape: 'soft', featured_style: 'ribbon' }) },
 ]
 
 // ─── Group 3: MenuPreview — 5 estilos de categorías ──────────────────────────
 
 const GROUP3_CONFIGS: Array<{ label: string; config: RestaurantDesignConfig }> = [
-    {
-        label: 'Categorías: Pills',
-        config: makeConfig({ name: 'Pills', slug: 'pills', colors: COLORS_MODERN, fonts: { heading: 'DM Sans', body: 'DM Sans' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'none' }),
-    },
-    {
-        label: 'Categorías: Tabs',
-        config: makeConfig({ name: 'Tabs', slug: 'tabs', colors: COLORS_BISTRO, fonts: { heading: 'Playfair Display', body: 'Lato' }, header_style: 'simple', category_style: 'tabs', card_shape: 'rounded', featured_style: 'none' }),
-    },
-    {
-        label: 'Categorías: Tags',
-        config: makeConfig({ name: 'Tags', slug: 'tags', colors: COLORS_CRAFT, fonts: { heading: 'Bebas Neue', body: 'Barlow' }, header_style: 'simple', category_style: 'tags', card_shape: 'sharp', featured_style: 'none' }),
-    },
-    {
-        label: 'Categorías: Underline',
-        config: makeConfig({ name: 'Underline', slug: 'underline', colors: COLORS_NORDIC, fonts: { heading: 'Cormorant Garamond', body: 'Outfit' }, header_style: 'simple', category_style: 'underline', card_shape: 'borderless', featured_style: 'none' }),
-    },
-    {
-        label: 'Categorías: Italic Tags',
-        config: makeConfig({ name: 'Italic Tags', slug: 'italic-tags', colors: COLORS_RUSTIC, fonts: { heading: 'Libre Baskerville', body: 'Source Sans 3' }, header_style: 'simple', category_style: 'italic-tags', card_shape: 'soft', featured_style: 'none' }),
-    },
+    { label: 'Categorías: Pills', config: makeConfig({ name: 'Pills', slug: 'pills', colors: COLORS_MODERN, fonts: { heading: 'DM Sans', body: 'DM Sans' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'none' }) },
+    { label: 'Categorías: Tabs', config: makeConfig({ name: 'Tabs', slug: 'tabs', colors: COLORS_BISTRO, fonts: { heading: 'Playfair Display', body: 'Lato' }, header_style: 'simple', category_style: 'tabs', card_shape: 'rounded', featured_style: 'none' }) },
+    { label: 'Categorías: Tags', config: makeConfig({ name: 'Tags', slug: 'tags', colors: COLORS_CRAFT, fonts: { heading: 'Bebas Neue', body: 'Barlow' }, header_style: 'simple', category_style: 'tags', card_shape: 'sharp', featured_style: 'none' }) },
+    { label: 'Categorías: Underline', config: makeConfig({ name: 'Underline', slug: 'underline', colors: COLORS_NORDIC, fonts: { heading: 'Cormorant Garamond', body: 'Outfit' }, header_style: 'simple', category_style: 'underline', card_shape: 'borderless', featured_style: 'none' }) },
+    { label: 'Categorías: Italic Tags', config: makeConfig({ name: 'Italic Tags', slug: 'italic-tags', colors: COLORS_RUSTIC, fonts: { heading: 'Libre Baskerville', body: 'Source Sans 3' }, header_style: 'simple', category_style: 'italic-tags', card_shape: 'soft', featured_style: 'none' }) },
 ]
 
-// ─── Group 4: design/components/MobilePreview — 3 variantes ──────────────────
+// ─── Group 4: MobilePreview — 3 variantes iPhone 14 ──────────────────────────
 
 const GROUP4_CONFIGS: Array<{ label: string; config: RestaurantDesignConfig }> = [
-    {
-        label: 'iPhone 14 · Grid + Destacados',
-        config: makeConfig(
-            { name: 'Grid Destacados', slug: 'modern-minimal', colors: COLORS_MODERN, fonts: { heading: 'DM Sans', body: 'DM Sans' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'dark-banner' },
-            { layout_type: 'grid', grid_columns: 2 }
-        ),
-    },
-    {
-        label: 'iPhone 14 · Lista',
-        config: makeConfig(
-            { name: 'Lista', slug: 'classic-bistro', colors: COLORS_BISTRO, fonts: { heading: 'Playfair Display', body: 'Lato' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'none' },
-            { layout_type: 'list', grid_columns: 1 }
-        ),
-    },
-    {
-        label: 'iPhone 14 · Grid Minimalista',
-        config: makeConfig(
-            { name: 'Grid Minimalista', slug: 'nordic-clean', colors: COLORS_NORDIC, fonts: { heading: 'Cormorant Garamond', body: 'Outfit' }, header_style: 'simple', category_style: 'pills', card_shape: 'borderless', featured_style: 'none' },
-            { layout_type: 'grid', grid_columns: 2, show_images: false, show_descriptions: false, card_style: 'outlined' }
-        ),
-    },
+    { label: 'iPhone 14 · Grid + Destacados', config: makeConfig({ name: 'Grid Destacados', slug: 'modern-minimal', colors: COLORS_MODERN, fonts: { heading: 'DM Sans', body: 'DM Sans' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'dark-banner' }, { layout_type: 'grid', grid_columns: 2 }) },
+    { label: 'iPhone 14 · Lista', config: makeConfig({ name: 'Lista', slug: 'classic-bistro', colors: COLORS_BISTRO, fonts: { heading: 'Playfair Display', body: 'Lato' }, header_style: 'simple', category_style: 'pills', card_shape: 'rounded', featured_style: 'none' }, { layout_type: 'list', grid_columns: 1 }) },
+    { label: 'iPhone 14 · Grid Minimalista', config: makeConfig({ name: 'Grid Minimalista', slug: 'nordic-clean', colors: COLORS_NORDIC, fonts: { heading: 'Cormorant Garamond', body: 'Outfit' }, header_style: 'simple', category_style: 'pills', card_shape: 'borderless', featured_style: 'none' }, { layout_type: 'grid', grid_columns: 2, show_images: false, show_descriptions: false, card_style: 'outlined' }) },
 ]
 
 // ─── Scale wrapper ────────────────────────────────────────────────────────────
@@ -334,7 +288,7 @@ export function DesignGallery({ restaurant, realMenus }: Props) {
 
     const FILTER_TABS: { id: GroupId; label: string }[] = [
         { id: 'all', label: 'Todos' },
-        { id: '1', label: 'Temas heredados' },
+        { id: '1', label: 'Temas' },
         { id: '2', label: 'Estilos de header' },
         { id: '3', label: 'Estilos de categorías' },
         { id: '4', label: 'Preview moderno' },
@@ -442,7 +396,7 @@ export function DesignGallery({ restaurant, realMenus }: Props) {
                 <section className="mb-16">
                     <SectionHeader
                         title="Grupo 2 — Estilos de header (MenuPreview)"
-                        description="Huérfano · Definido en design/components/MenuPreview.tsx pero sin ninguna importación activa. El componente más avanzado visualmente del proyecto."
+                        description="Huérfano · design/components/MenuPreview.tsx. El componente más avanzado visualmente. Sin importaciones activas en producción."
                         count={GROUP2_CONFIGS.length}
                     />
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -488,13 +442,13 @@ export function DesignGallery({ restaurant, realMenus }: Props) {
             )}
 
             {/* ════════════════════════════════════════════════════
-                GRUPO 4 — design/components/MobilePreview · 3 variantes
+                GRUPO 4 — MobilePreview · 3 variantes iPhone 14
             ════════════════════════════════════════════════════ */}
             {showGroup('4') && (
                 <section className="mb-16">
                     <SectionHeader
                         title="Grupo 4 — Preview moderno iPhone 14 (MobilePreview)"
-                        description="Huérfano · Definido en design/components/MobilePreview.tsx. Marco Dynamic Island. Sin importaciones activas."
+                        description="Huérfano · design/components/MobilePreview.tsx. Marco Dynamic Island. Sin importaciones activas en producción."
                         count={GROUP4_CONFIGS.length}
                     />
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">

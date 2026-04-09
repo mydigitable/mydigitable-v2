@@ -2,7 +2,20 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import MenuClient from "./MenuClient";
+import { getThemeById } from "@/lib/theme/themes";
 import type { Restaurant, Category, Product, DailyMenu, DesignTheme, ProductExtraGroup, ProductExtra } from "./types";
+
+// Convert space-separated RGB token (e.g. "22 163 74") to hex ("#16a34a")
+function rgbTokenToHex(rgb: string): string {
+    const parts = rgb.trim().split(/\s+/).map(Number);
+    return '#' + parts.slice(0, 3).map(n => n.toString(16).padStart(2, '0')).join('');
+}
+
+// Extract readable font name from CSS font string (e.g. "'DM Sans', sans-serif" → "DM Sans")
+function extractFontName(fontCSS: string): string {
+    const match = fontCSS.match(/^'([^']+)'/);
+    return match ? match[1] : fontCSS.split(',')[0].trim().replace(/'/g, '');
+}
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -119,41 +132,35 @@ export default async function PublicMenuPage({ params }: PageProps) {
         city: rd.city || null,
     };
 
-    // 2. Fetch design config + selected theme
+    // 2. Fetch display config, resolve theme from themes.ts (single source of truth)
     let designTheme: DesignTheme | null = null;
     try {
         const { data: designConfig } = await supabase
             .from("restaurant_design_config")
-            .select(`
-                *,
-                selected_theme:menu_themes(*)
-            `)
+            .select(`*, selected_theme:menu_themes(slug)`)
             .eq("restaurant_id", restaurant.id)
             .single();
 
         if (designConfig) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const dc = designConfig as Record<string, any>;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const theme = dc.selected_theme as Record<string, any> | null;
-
-            // Use theme colors, falling back to custom_colors or defaults
-            const themeColors = theme?.colors || dc.custom_colors || {};
-            const themeFonts = theme?.fonts || dc.custom_fonts || {};
+            const themeSlug = (dc.selected_theme as Record<string, string> | null)?.slug;
+            const appTheme = getThemeById(themeSlug || 'modern-minimal');
+            const t = appTheme.tokens;
 
             designTheme = {
                 colors: {
-                    primary: themeColors.primary || '#16A34A',
-                    accent: themeColors.accent || '#22C55E',
-                    background: themeColors.background || '#FAFAF9',
-                    surface: themeColors.surface || '#FFFFFF',
-                    border: themeColors.border || '#E7E5E4',
-                    text: themeColors.text || '#1C1917',
-                    text_secondary: themeColors.text_secondary || '#78716C',
+                    primary: rgbTokenToHex(t.colorPrimary),
+                    accent: rgbTokenToHex(t.colorPrimary),
+                    background: rgbTokenToHex(t.colorBackground),
+                    surface: rgbTokenToHex(t.colorSurface),
+                    border: rgbTokenToHex(t.colorBorder),
+                    text: rgbTokenToHex(t.colorTextPrimary),
+                    text_secondary: rgbTokenToHex(t.colorTextSecondary),
                 },
                 fonts: {
-                    heading: themeFonts.heading || 'DM Sans',
-                    body: themeFonts.body || 'DM Sans',
+                    heading: extractFontName(t.fontHeading),
+                    body: extractFontName(t.fontBody),
                 },
                 config: {
                     show_search: dc.show_search ?? true,
@@ -168,7 +175,25 @@ export default async function PublicMenuPage({ params }: PageProps) {
             };
         }
     } catch {
-        // Design config may not exist yet — use fallback
+        // Design config may not exist yet — use default modern-minimal theme
+        const appTheme = getThemeById('modern-minimal');
+        const t = appTheme.tokens;
+        designTheme = {
+            colors: {
+                primary: rgbTokenToHex(t.colorPrimary),
+                accent: rgbTokenToHex(t.colorPrimary),
+                background: rgbTokenToHex(t.colorBackground),
+                surface: rgbTokenToHex(t.colorSurface),
+                border: rgbTokenToHex(t.colorBorder),
+                text: rgbTokenToHex(t.colorTextPrimary),
+                text_secondary: rgbTokenToHex(t.colorTextSecondary),
+            },
+            fonts: { heading: extractFontName(t.fontHeading), body: extractFontName(t.fontBody) },
+            config: {
+                show_search: true, show_categories: true, show_images: true, show_prices: true,
+                show_descriptions: true, show_badges: true, show_allergens: true, show_logo: true,
+            },
+        };
     }
 
     // 3. Fetch active menus → their categories → products

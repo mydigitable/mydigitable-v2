@@ -158,62 +158,6 @@ export interface Restaurant {
     city: string | null;
 }
 
-// ============================================================================
-// Fallback Tailwind themes (used when no DB theme is configured)
-// ============================================================================
-
-export const themes: Record<string, Theme> = {
-    classic: {
-        background: 'bg-gray-50',
-        cardBg: 'bg-white',
-        text: 'text-gray-900',
-        textSecondary: 'text-gray-500',
-        primary: 'bg-emerald-500',
-        primaryText: 'text-emerald-500',
-        accent: 'bg-emerald-50',
-        border: 'border-gray-100',
-    },
-    midnight: {
-        background: 'bg-slate-950',
-        cardBg: 'bg-slate-900',
-        text: 'text-white',
-        textSecondary: 'text-slate-400',
-        primary: 'bg-amber-500',
-        primaryText: 'text-amber-500',
-        accent: 'bg-amber-500/10',
-        border: 'border-slate-800',
-    },
-    neon: {
-        background: 'bg-zinc-950',
-        cardBg: 'bg-zinc-900',
-        text: 'text-white',
-        textSecondary: 'text-zinc-400',
-        primary: 'bg-pink-500',
-        primaryText: 'text-pink-500',
-        accent: 'bg-pink-500/10',
-        border: 'border-zinc-800',
-    },
-    ocean: {
-        background: 'bg-teal-50',
-        cardBg: 'bg-white',
-        text: 'text-teal-900',
-        textSecondary: 'text-teal-600',
-        primary: 'bg-cyan-500',
-        primaryText: 'text-cyan-600',
-        accent: 'bg-cyan-50',
-        border: 'border-teal-100',
-    },
-    minimal: {
-        background: 'bg-white',
-        cardBg: 'bg-gray-50',
-        text: 'text-gray-900',
-        textSecondary: 'text-gray-500',
-        primary: 'bg-black',
-        primaryText: 'text-black',
-        accent: 'bg-gray-100',
-        border: 'border-gray-200',
-    },
-};
 
 export const allergensList = [
     { id: 'gluten', name: 'Gluten', emoji: '🌾' },

@@ -18,6 +18,9 @@ import CartModal from "./components/CartModal";
 import DietaryModal from "./components/DietaryModal";
 import DailyMenuModal from "./components/DailyMenuModal";
 import CheckoutModal from "./components/CheckoutModal";
+import { buildCSSVariables } from "@/lib/theme/apply-theme";
+import { getThemeById } from "@/lib/theme/themes";
+import type { ThemeDefinition } from "@/lib/theme/types";
 import type {
     Product,
     Category,
@@ -29,7 +32,6 @@ import type {
     Theme,
     ProductExtraGroup,
 } from "./types";
-import { themes } from "./types";
 
 // ============================================================================
 // Helpers
@@ -56,20 +58,45 @@ function extractDesc(desc: unknown): string | null {
 }
 
 // ============================================================================
-// Convert DB colors to inline style helpers
+// Convert DesignTheme to CSS variables using buildCSSVariables (themes.ts)
 // ============================================================================
 
-function makeInlineTheme(dt: DesignTheme) {
+function hexToRgbToken(hex: string): string {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return `${r} ${g} ${b}`;
+}
+
+function makeInlineTheme(dt: DesignTheme): React.CSSProperties {
     const c = dt.colors;
-    return {
-        '--bg': c.background,
-        '--surface': c.surface,
-        '--border': c.border,
-        '--text': c.text,
-        '--text2': c.text_secondary,
-        '--primary': c.primary,
-        '--accent': c.accent,
-    } as React.CSSProperties;
+    // Build a synthetic ThemeDefinition from DesignTheme hex colors
+    const base = getThemeById('modern-minimal');
+    const syntheticTheme: ThemeDefinition = {
+        ...base,
+        tokens: {
+            ...base.tokens,
+            colorPrimary: hexToRgbToken(c.primary),
+            colorBackground: hexToRgbToken(c.background),
+            colorSurface: hexToRgbToken(c.surface),
+            colorBorder: hexToRgbToken(c.border),
+            colorTextPrimary: hexToRgbToken(c.text),
+            colorTextSecondary: hexToRgbToken(c.text_secondary),
+            colorTextMuted: hexToRgbToken(c.text_secondary),
+            fontHeading: `'${dt.fonts.heading}', serif`,
+            fontBody: `'${dt.fonts.body}', sans-serif`,
+            fontPrice: `'${dt.fonts.heading}', serif`,
+            headerBackground: `rgb(${hexToRgbToken(c.background)})`,
+            headerTextColor: hexToRgbToken(c.text),
+            categoryActiveBackground: hexToRgbToken(c.primary),
+            categoryActiveText: '255 255 255',
+            cartButtonBackground: hexToRgbToken(c.primary),
+            cartButtonText: '255 255 255',
+        },
+    };
+    // Use buildCSSVariables as the canonical theme application method
+    return buildCSSVariables(syntheticTheme) as React.CSSProperties;
 }
 
 // ============================================================================
@@ -366,10 +393,17 @@ export default function MenuClient({
     const fonts = designTheme?.fonts;
     const config = designTheme?.config;
 
-    // Fallback to Tailwind theme
-    const previewThemeId = searchParams.get('preview_theme');
-    const activeThemeId = previewThemeId || restaurant.theme_id;
-    const fallbackTheme: Theme = themes[activeThemeId || 'classic'] || themes.classic;
+    // Fallback Tailwind theme — used only when designTheme is not available
+    const fallbackTheme: Theme = {
+        background: 'bg-gray-50',
+        cardBg: 'bg-white',
+        text: 'text-gray-900',
+        textSecondary: 'text-gray-500',
+        primary: 'bg-emerald-500',
+        primaryText: 'text-emerald-500',
+        accent: 'bg-emerald-50',
+        border: 'border-gray-100',
+    };
 
     // Google Fonts link
     const fontLink = useMemo(() => {
